@@ -140,7 +140,7 @@
   },
   "notFound": {
     "title": "404 — command not found",
-    "body": "The requested page does not exist.bash: page not found",
+    "body": "The requested page does not exist.\nbash: page not found",
     "back": "back to home"
   }
 }
