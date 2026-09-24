@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# eve agent runtime state (cache, dev snapshots)
+.eve/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

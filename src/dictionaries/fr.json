@@ -1,0 +1,142 @@
+{
+  "site": {
+    "title": "Amidala Samari — Ingénieur IA & Agents",
+    "description": "Portfolio d'Amidala Samari (alias Orion Dee Scales), ingénieur IA et agents. Conception d'agents, RAG, LLM ops et interfaces génératives.",
+    "tagline": "Ingénieur IA & Agents"
+  },
+  "nav": {
+    "home": "accueil",
+    "about": "à-propos",
+    "projects": "projets",
+    "blog": "blog",
+    "contact": "contact",
+    "cv": "cv",
+    "languageSwitch": "english",
+    "skipToContent": "Aller au contenu"
+  },
+  "hero": {
+    "bootTitle": "Initialisation du portfolio…",
+    "bootLines": [
+      "amidala@samari:~$ whoami",
+      "Amidala Samari — alias « Orion Dee Scales »",
+      "amidala@samari:~$ cat role.txt",
+      "Ingénieur IA & Agents"
+    ],
+    "greeting": "Bonjour, je suis",
+    "name": "Amidala Samari",
+    "aka": "alias « Orion Dee Scales »",
+    "role": "Ingénieur IA & Agents",
+    "pitch": "Je conçois et j'opère des systèmes d'agents IA fiables : orchestration multi-agents, RAG, évaluations et interfaces génératives.",
+    "cta": "voir mes projets",
+    "ctaSecondary": "me contacter",
+    "statusLine": "statut : ouvert aux opportunités"
+  },
+  "about": {
+    "title": "à-propos",
+    "command": "cat about.md",
+    "intro": "Placeholder — bio d'Amidala Samari : parcours, vision de l'ingénierie des agents, ce qui me motive.",
+    "identity": "Identité",
+    "identityText": "Nom légal : Amidala Samari. Alter ego créatif : Orion Dee Scales.",
+    "focusTitle": "Axes de travail",
+    "focus": ["Orchestration d'agents IA", "RAG & recherche sémantique", "Évaluations & garde-fous", "Interfaces génératives"],
+    "valuesTitle": "Ce qui compte",
+    "values": ["Fiabilité avant spectacle", "Données avant opinions", "Outils avant hype"]
+  },
+  "projects": {
+    "title": "projets",
+    "command": "ls -la ~/projets/",
+    "subtitle": "Placeholder — sélection de projets (bientôt synchronisés depuis le mini-CMS Supabase).",
+    "viewProject": "voir le projet",
+    "viewCode": "voir le code",
+    "featured": "à la une",
+    "empty": "Projets en cours de synchronisation…",
+    "source": "source : Supabase"
+  },
+  "blog": {
+    "title": "blog",
+    "command": "ls ~/blog/*.mdx | head",
+    "subtitle": "Notes techniques sur l'ingénierie des agents, les LLM et le RAG.",
+    "readMore": "lire l'article",
+    "backToBlog": "retour au blog",
+    "draftBadge": "draft",
+    "empty": "Aucun article pour le moment.",
+    "minutes": "min de lecture"
+  },
+  "guestbook": {
+    "title": "livre d'or",
+    "command": "tail -f ~/guestbook.log",
+    "subtitle": "Laissez une trace de votre passage.",
+    "name": "pseudo",
+    "namePlaceholder": "h4ck3r",
+    "message": "message",
+    "messagePlaceholder": "votre message…",
+    "submit": "envoyer",
+    "sending": "envoi…",
+    "thanks": "Merci ! Votre message apparaîtra après modération.",
+    "error": "Échec de l'envoi. Réessayez plus tard.",
+    "loading": "chargement…"
+  },
+  "contact": {
+    "title": "contact",
+    "command": "mailto amidala@samari.dev",
+    "subtitle": "Un projet, une question, une opportunité ? Écrivez-moi.",
+    "name": "nom",
+    "namePlaceholder": "Votre nom",
+    "email": "email",
+    "emailPlaceholder": "vous@exemple.com",
+    "subject": "sujet",
+    "subjectPlaceholder": "Objet de votre message",
+    "message": "message",
+    "messagePlaceholder": "Votre message…",
+    "submit": "envoyer le message",
+    "sending": "envoi…",
+    "success": "Message envoyé ! Je vous répondrai bientôt.",
+    "error": "Échec de l'envoi. Réessayez ou utilisez l'email direct.",
+    "emailDirect": "ou directement :"
+  },
+  "cv": {
+    "title": "cv",
+    "command": "curl -O cv.pdf",
+    "download": "télécharger le cv",
+    "placeholder": "CV placeholder — version PDF à venir."
+  },
+  "studio": {
+    "title": "studio",
+    "command": "eve studio --draft blog",
+    "subtitle": "Assistant de rédaction : générez des drafts d'articles avec l'agent eve.",
+    "placeholder": "Décrivez l'article à rédiger…",
+    "send": "générer",
+    "generating": "génération…",
+    "hint": "Astuce : demandez un plan, un draft complet, ou une amélioration d'un texte existant.",
+    "saveDraft": "sauvegarder le draft",
+    "draftSaved": "Draft sauvegardé.",
+    "passcode": "Passcode",
+    "passcodePlaceholder": "votre passcode…",
+    "login": "se connecter",
+    "loginError": "Passcode invalide",
+    "logout": "déconnexion",
+    "toolRunning": "outil en cours…",
+    "toolDone": « l'outil « {name} » a été exécuté avec succès »,
+    "toolDenied": « l'outil « {name} » a été refusé »,
+    "toolFailed": « l'outil « {name} » a échoué »,
+    "toolAvailable": « l'outil « {name} » a rendu ses résultats »,
+    "approval": « approbation requise »,
+    "cancel": « annuler »
+  },
+  "ai": {
+    "sectionGenerating": "génération en cours…",
+    "sectionGenerated": "généré par l'agent eve",
+    "sectionFailed": "génération indisponible — contenu statique",
+    "regenerate": "régénérer"
+  },
+  "footer": {
+    "built": "Construit avec Next.js, eve, Supabase & shadcn/ui",
+    "rights": "Tous droits réservés.",
+    "source": "code source"
+  },
+  "notFound": {
+    "title": "404 — commande introuvable",
+    "body": "La page demandée n'existe pas.bash: page not found",
+    "back": "retour à l'accueil"
+  }
+}

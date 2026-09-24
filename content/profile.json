@@ -1,0 +1,54 @@
+{
+  "$comment": "Données de profil du portfolio. Placeholders à remplacer par Amidala.",
+  "name": {
+    "legal": "Amidala Samari",
+    "alterEgo": "Orion Dee Scales",
+    "handle": "amidala@samari"
+  },
+  "role": {
+    "fr": "Ingénieur IA & Agents",
+    "en": "AI & Agents Engineer"
+  },
+  "location": "France",
+  "email": "amidala@samari.dev",
+  "socials": [
+    { "label": "GitHub", "url": "https://github.com/" },
+    { "label": "LinkedIn", "url": "https://www.linkedin.com/" },
+    { "label": "X", "url": "https://x.com/" }
+  ],
+  "skills": [
+    { "label": "TypeScript", "level": 4 },
+    { "label": "Next.js", "level": 4 },
+    { "label": "Python", "level": 4 },
+    { "label": "LLM / Agents", "level": 5 },
+    { "label": "RAG", "level": 4 },
+    { "label": "Supabase / Postgres", "level": 4 },
+    { "label": "Évaluations", "level": 3 }
+  ],
+  "timeline": [
+    {
+      "year": "20XX",
+      "title": {
+        "fr": "Poste placeholder — Ingénieur IA",
+        "en": "Placeholder role — AI Engineer"
+      },
+      "org": { "fr": "Entreprise placeholder", "en": "Placeholder company" },
+      "description": {
+        "fr": "Description placeholder du poste et des réalisations.",
+        "en": "Placeholder description of the role and achievements."
+      }
+    },
+    {
+      "year": "20XX",
+      "title": {
+        "fr": "Poste placeholder — Développeur full-stack",
+        "en": "Placeholder role — Full-stack developer"
+      },
+      "org": { "fr": "Entreprise placeholder", "en": "Placeholder company" },
+      "description": {
+        "fr": "Description placeholder du poste et des réalisations.",
+        "en": "Placeholder description of the role and achievements."
+      }
+    }
+  ]
+}

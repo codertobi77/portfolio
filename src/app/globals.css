@@ -1,26 +1,169 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-mono);
+  --color-terminal-green: var(--terminal-green);
+  --color-terminal-dim: var(--terminal-dim);
+  --color-terminal-amber: var(--terminal-amber);
+  --color-terminal-cyan: var(--terminal-cyan);
+  --color-terminal-red: var(--terminal-red);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Terminal CRT theme — single dark palette (site is always dark) */
+:root {
+  --background: oklch(0.145 0.012 150);
+  --foreground: oklch(0.87 0.17 149);
+  --card: oklch(0.19 0.012 150);
+  --card-foreground: oklch(0.87 0.17 149);
+  --popover: oklch(0.19 0.012 150);
+  --popover-foreground: oklch(0.87 0.17 149);
+  --primary: oklch(0.78 0.19 149);
+  --primary-foreground: oklch(0.13 0.012 150);
+  --secondary: oklch(0.24 0.014 150);
+  --secondary-foreground: oklch(0.87 0.17 149);
+  --muted: oklch(0.24 0.014 150);
+  --muted-foreground: oklch(0.66 0.07 150);
+  --accent: oklch(0.27 0.02 150);
+  --accent-foreground: oklch(0.87 0.17 149);
+  --destructive: oklch(0.64 0.21 25);
+  --border: oklch(0.31 0.02 150);
+  --input: oklch(0.31 0.02 150);
+  --ring: oklch(0.78 0.19 149);
+  --radius: 0.375rem;
+
+  --terminal-green: oklch(0.78 0.19 149);
+  --terminal-dim: oklch(0.66 0.07 150);
+  --terminal-amber: oklch(0.82 0.15 85);
+  --terminal-cyan: oklch(0.85 0.11 200);
+  --terminal-red: oklch(0.64 0.21 25);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-mono;
+  }
+  ::selection {
+    background: oklch(0.78 0.19 149 / 30%);
   }
 }
 
-body {
+/* ---- CRT / terminal effects ---- */
+
+/* Scanlines overlay over the whole page */
+.crt-scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    oklch(0 0 0 / 18%) 3px,
+    oklch(0 0 0 / 18%) 4px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* Subtle vignette */
+.crt-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    oklch(0 0 0 / 35%) 100%
+  );
+}
+
+/* Phosphor glow for headings & key text */
+.glow {
+  text-shadow:
+    0 0 6px oklch(0.78 0.19 149 / 45%),
+    0 0 24px oklch(0.78 0.19 149 / 20%);
+}
+
+.glow-amber {
+  text-shadow: 0 0 6px oklch(0.82 0.15 85 / 45%);
+}
+
+/* Blinking block cursor */
+.cursor-blink::after {
+  content: "█";
+  margin-left: 0.15em;
+  animation: cursor-blink 1s steps(1) infinite;
+}
+
+@keyframes cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Prompt */
+.prompt::before {
+  content: "❯ ";
+  color: var(--terminal-green);
+}
+
+/* Typed caret for TypeWriter */
+.caret-blink {
+  animation: cursor-blink 1s steps(1) infinite;
+}
+
+/* Scrollbar — terminal style */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.31 0.02 150);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.4 0.05 150);
+}
+
+/* Terminal window title bar buttons */
+.term-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  display: inline-block;
 }
