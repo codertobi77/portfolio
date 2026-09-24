@@ -125,7 +125,21 @@
     "you": "vous",
     "agentName": "eve",
     "approve": "approuver",
-    "error": "Une erreur est survenue. Réessayez."
+    "error": "Une erreur est survenue. Réessayez.",
+    "admin": {
+      "title": "admin",
+      "subtitle": "Modération du livre d'or et boîte de réception des messages de contact.",
+      "command": "sudo guestbook --moderate",
+      "link": "admin",
+      "unconfigured": "SUPABASE_SERVICE_ROLE_KEY absente — modération indisponible.",
+      "guestbookTitle": "livre d'or — en attente",
+      "guestbookApprovedTitle": "livre d'or — publiés",
+      "contactTitle": "messages — inbox",
+      "empty": "Rien à modérer.",
+      "approve": "approuver",
+      "delete": "supprimer",
+      "reply": "répondre"
+    }
   },
   "ai": {
     "sectionGenerating": "génération en cours…",

@@ -1,9 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import {
   STUDIO_COOKIE,
+  isStudioOwner,
   isValidPasscode,
   studioPasscodeConfigured,
   studioToken,
@@ -23,6 +25,23 @@ const guestbookSchema = z.object({
 
 function getOutcome(error: string | null): { ok: boolean; error?: string } {
   return error ? { ok: false, error } : { ok: true };
+}
+
+// ---- Studio admin (service-role, owner only) ----
+
+const idSchema = z.uuid();
+const adminLocaleSchema = z.enum(["fr", "en"]);
+
+/** Service-role client, only for authenticated Studio owners. */
+async function adminSupabase() {
+  if (!(await isStudioOwner())) return null;
+  const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
+  return getSupabaseAdminClient();
+}
+
+function revalidateAdmin(locale: string) {
+  revalidatePath(`/${locale}/studio/admin`);
+  revalidatePath(`/${locale}/guestbook`);
 }
 
 export async function submitContact(formData: FormData) {
@@ -94,4 +113,55 @@ export async function loginStudio(formData: FormData) {
 export async function logoutStudio() {
   const store = await cookies();
   store.delete(STUDIO_COOKIE);
+}
+
+export async function approveGuestbookEntry(formData: FormData): Promise<void> {
+  const client = await adminSupabase();
+  if (!client) return;
+
+  const id = idSchema.safeParse(formData.get("id"));
+  const locale = adminLocaleSchema.safeParse(formData.get("locale"));
+  if (!id.success || !locale.success) return;
+
+  const { error } = await client
+    .from("guestbook")
+    .update({ approved: true })
+    .eq("id", id.data);
+  if (error) return;
+
+  revalidateAdmin(locale.data);
+}
+
+export async function deleteGuestbookEntry(formData: FormData): Promise<void> {
+  const client = await adminSupabase();
+  if (!client) return;
+
+  const id = idSchema.safeParse(formData.get("id"));
+  const locale = adminLocaleSchema.safeParse(formData.get("locale"));
+  if (!id.success || !locale.success) return;
+
+  const { error } = await client
+    .from("guestbook")
+    .delete()
+    .eq("id", id.data);
+  if (error) return;
+
+  revalidateAdmin(locale.data);
+}
+
+export async function deleteContactMessage(formData: FormData): Promise<void> {
+  const client = await adminSupabase();
+  if (!client) return;
+
+  const id = idSchema.safeParse(formData.get("id"));
+  const locale = adminLocaleSchema.safeParse(formData.get("locale"));
+  if (!id.success || !locale.success) return;
+
+  const { error } = await client
+    .from("contact_messages")
+    .delete()
+    .eq("id", id.data);
+  if (error) return;
+
+  revalidatePath(`/${locale.data}/studio/admin`);
 }

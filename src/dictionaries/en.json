@@ -125,7 +125,21 @@
     "you": "you",
     "agentName": "eve",
     "approve": "approve",
-    "error": "Something went wrong. Try again."
+    "error": "Something went wrong. Try again.",
+    "admin": {
+      "title": "admin",
+      "subtitle": "Guestbook moderation and contact message inbox.",
+      "command": "sudo guestbook --moderate",
+      "link": "admin",
+      "unconfigured": "SUPABASE_SERVICE_ROLE_KEY missing — moderation unavailable.",
+      "guestbookTitle": "guestbook — pending",
+      "guestbookApprovedTitle": "guestbook — published",
+      "contactTitle": "messages — inbox",
+      "empty": "Nothing to moderate.",
+      "approve": "approve",
+      "delete": "delete",
+      "reply": "reply"
+    }
   },
   "ai": {
     "sectionGenerating": "generating…",
