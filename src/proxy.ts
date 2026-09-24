@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { match } from "@formatjs/intl-localematcher";
 import Negotiator from "negotiator";
-import { defaultLocale, locales } from "@/lib/i18n";
+// Import from @/lib/locales (not @/lib/i18n): the proxy cannot pull
+// next/root-params, which i18n depends on.
+import { defaultLocale, locales } from "@/lib/locales";
 
 function getLocale(request: NextRequest): string {
   const headers = {

@@ -1,17 +1,15 @@
 import { locale as getRootLocale } from "next/root-params";
 import { notFound } from "next/navigation";
+import { defaultLocale, hasLocale, locales } from "@/lib/locales";
 
-export const locales = ["fr", "en"] as const;
-export type Locale = (typeof locales)[number];
-export const defaultLocale: Locale = "fr";
+// Re-exported for convenience — import from @/lib/locales in middleware.
+export { defaultLocale, hasLocale, locales } from "@/lib/locales";
+export type { Locale } from "@/lib/locales";
 
 const dictionaries = {
   fr: () => import("@/dictionaries/fr.json").then((m) => m.default),
   en: () => import("@/dictionaries/en.json").then((m) => m.default),
 };
-
-export const hasLocale = (locale: string): locale is Locale =>
-  locales.includes(locale as Locale);
 
 export const getDictionary = async () => {
   const locale = await getRootLocale();

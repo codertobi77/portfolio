@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginStudio } from "@/lib/actions";
+import { loginStudio, logoutStudio } from "@/lib/actions";
 import type { Dictionary } from "@/lib/i18n";
 
 type State = { ok: boolean };
@@ -42,10 +42,7 @@ export function StudioLogin({ dict }: { dict: Dictionary }) {
 
 export function StudioLogout({ dict }: { dict: Dictionary }) {
   return (
-    <form action={async () => {
-      "use server";
-      await import("@/lib/actions").then((m) => m.logoutStudio());
-    }}>
+    <form action={logoutStudio}>
       <button
         type="submit"
         className="text-xs text-terminal-dim underline-offset-4 hover:text-terminal-red hover:underline"

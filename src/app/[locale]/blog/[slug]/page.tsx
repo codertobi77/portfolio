@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBlogPost } from "@/lib/blog";
 import { getDictionary, hasLocale, type Dictionary } from "@/lib/i18n";
-import { MDXRemote, serialize } from "next-mdx-remote";
+import { compileMDX } from "next-mdx-remote/rsc";
 
 export default async function BlogPostPage({
   params,
@@ -12,64 +12,50 @@ export default async function BlogPostPage({
   const { locale, slug } = await params;
   if (!hasLocale(locale)) notFound();
 
-  const post = await getBlogPost(locale, slug);
+  const post = getBlogPost(locale, slug);
   if (!post) notFound();
 
   const dict = (await getDictionary()) as Dictionary;
 
-  const source = [
-    "---",
-    `title: ${JSON.stringify(post.title)}`,
-    `date: ${post.date}`,
-    ...(post.excerpt ? [`excerpt: ${JSON.stringify(post.excerpt)}`] : []),
-    ...(post.tags.length > 0
-      ? [`tags: [${post.tags.map((t) => JSON.stringify(t)).join(", ")}]`]
-      : []),
-    ...(post.draft ? ["draft: true"] : []),
-    "---",
-    "",
-    post.content,
-  ].join("\n");
-
-  const { compiledSource, frontmatter } = await serialize(source);
+  // Frontmatter was already parsed by gray-matter in lib/blog — compile the
+  // body only.
+  const { content } = await compileMDX({
+    source: post.content,
+    components: {
+      code: (props: any) => (
+        <code
+          className="rounded-sm px-1 py-0.5 text-xs text-terminal-cyan"
+          {...props}
+        />
+      ),
+      pre: (props: any) => (
+        <pre
+          className="rounded-sm p-4 text-xs text-terminal-dim"
+          {...props}
+        />
+      ),
+    },
+  });
 
   return (
-    <section id={`blog-post-${slug}`} className="scroll-mt-24 max-w-xl mx-auto prose">
-      <h1 className="text-2xl font-bold mb-4">
+    <section id={`blog-post-${slug}`} className="prose mx-auto max-w-xl scroll-mt-24">
+      <h1 className="mb-4 text-2xl font-bold">
         <span className="text-terminal-dim">❯ </span>
-        <span className="glow text-terminal-green">
-          {(frontmatter as { title?: string }).title ?? post.title}
-        </span>
+        <span className="glow text-terminal-green">{post.title}</span>
       </h1>
       <p className="mb-4 text-terminal-amber">
-        <span className="text-xs text-terminal-dim">
-          {(frontmatter as { date?: string }).date ?? post.date}
-        </span>
-        {post.minutes} {dict.blog.minutes} read
+        <span className="text-xs text-terminal-dim">{post.date}</span>
+        {" — "}
+        {post.minutes} {dict.blog.minutes}
       </p>
 
-      {(frontmatter as { draft?: boolean }).draft && (
+      {post.draft && (
         <p className="mb-4 text-xs text-terminal-amber">
           [{dict.blog.draftBadge}]
         </p>
       )}
 
-      <MDXRemote
-        compiledSource={compiledSource}
-        frontmatter={frontmatter as Record<string, unknown>}
-        components={{
-          code: (props: any) => (
-            <code className="text-xs text-terminal-cyan rounded-sm px-1 py-0.5"
-              {...props}
-            />
-          ),
-          pre: (props: any) => (
-            <pre className="rounded-sm p-4 text-xs text-terminal-dim"
-              {...props}
-            />
-          ),
-        }}
-      />
+      {content}
 
       <Link
         href={`/${locale}/blog`}
