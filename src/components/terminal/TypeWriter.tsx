@@ -30,7 +30,6 @@ export function TypeWriter({
   useEffect(() => {
     let i = 0;
     let interval: ReturnType<typeof setInterval> | undefined;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const start = () => {
       setDisplayed("");
@@ -46,7 +45,7 @@ export function TypeWriter({
       }, speed);
     };
 
-    timeout = setTimeout(start, startDelay);
+    const timeout = setTimeout(start, startDelay);
     return () => {
       if (interval) clearInterval(interval);
       if (timeout) clearTimeout(timeout);

@@ -24,6 +24,7 @@ export function BootSequence({
 
   useEffect(() => {
     let current = 0;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only replay of the boot log: full text is server-rendered for SEO, then reset on mount
     setVisibleCount(0);
     const interval = setInterval(() => {
       current += 1;

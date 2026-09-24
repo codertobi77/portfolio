@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 
 /**
  * Global 404 for unmatched URLs (bypasses app rendering and the [locale]
@@ -33,18 +34,18 @@ export default function GlobalNotFound() {
             404 — commande introuvable
           </h1>
           <p className="mt-3 text-foreground/90">
-            La page demandée n'existe pas.
+            La page demandée n’existe pas.
           </p>
           <p className="mt-1 text-sm text-terminal-dim">
             The requested page does not exist.
           </p>
           <p className="mt-2 text-xs text-terminal-red">bash: page not found</p>
-          <a
+          <Link
             href="/fr"
             className="prompt mt-6 inline-block border border-terminal-green/60 bg-terminal-green/10 px-4 py-2 text-sm text-terminal-green transition-colors hover:bg-terminal-green/20"
           >
-            retour à l'accueil / back home
-          </a>
+            retour à l’accueil / back home
+          </Link>
         </main>
       </body>
     </html>

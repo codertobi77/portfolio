@@ -1,6 +1,6 @@
 import { locale as getRootLocale } from "next/root-params";
 import { notFound } from "next/navigation";
-import { defaultLocale, hasLocale, locales } from "@/lib/locales";
+import { hasLocale } from "@/lib/locales";
 
 // Re-exported for convenience — import from @/lib/locales in middleware.
 export { defaultLocale, hasLocale, locales } from "@/lib/locales";

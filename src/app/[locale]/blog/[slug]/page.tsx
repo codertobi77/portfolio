@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getBlogPost } from "@/lib/blog";
 import { getDictionary, hasLocale, type Dictionary } from "@/lib/i18n";
 import { compileMDX } from "next-mdx-remote/rsc";
+import type { ComponentProps } from "react";
 
 export default async function BlogPostPage({
   params,
@@ -22,13 +23,13 @@ export default async function BlogPostPage({
   const { content } = await compileMDX({
     source: post.content,
     components: {
-      code: (props: any) => (
+      code: (props: ComponentProps<"code">) => (
         <code
           className="rounded-sm px-1 py-0.5 text-xs text-terminal-cyan"
           {...props}
         />
       ),
-      pre: (props: any) => (
+      pre: (props: ComponentProps<"pre">) => (
         <pre
           className="rounded-sm p-4 text-xs text-terminal-dim"
           {...props}

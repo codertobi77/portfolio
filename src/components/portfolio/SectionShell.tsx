@@ -34,7 +34,6 @@ export function SectionShell({
   const ref = useRef<HTMLDivElement>(null);
   const [generated, setGenerated] = useState<Generated | null>(null);
   const triggeredRef = useRef(false);
-  const messages = data.messages ?? [];
 
   // Trigger one generation per section per session.
   useEffect(() => {
@@ -76,7 +75,10 @@ export function SectionShell({
   useEffect(() => {
     if (!generated || generated.source !== "generating") return;
 
+    const messages = data.messages ?? [];
+
     if (status === "error") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs external agent status into local state
       setGenerated({ text: "", source: "failed" });
       return;
     }
@@ -97,7 +99,7 @@ export function SectionShell({
     } else if (lastAssistant?.metadata?.status === "failed") {
       setGenerated({ text: "", source: "failed" });
     }
-  }, [messages, status, generated]);
+  }, [data, status, generated]);
 
   if (!generated) return <div ref={ref} className={className}>{children}</div>;
 
