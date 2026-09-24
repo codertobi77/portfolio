@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBlogPost } from "@/lib/blog";
-import { getDictionary, type Dictionary, type Locale } from "@/lib/i18n";
+import { getDictionary, hasLocale, type Dictionary } from "@/lib/i18n";
 import { MDXRemote, serialize } from "next-mdx-remote";
 
 export default async function BlogPostPage({
@@ -33,7 +34,7 @@ export default async function BlogPostPage({
   const { compiledSource, frontmatter } = await serialize(source);
 
   return (
-    <section id="blog-post-{slug}" className="scroll-mt-24 max-w-xl mx-auto prose">
+    <section id={`blog-post-${slug}`} className="scroll-mt-24 max-w-xl mx-auto prose">
       <h1 className="text-2xl font-bold mb-4">
         <span className="text-terminal-dim">❯ </span>
         <span className="glow text-terminal-green">
@@ -49,7 +50,7 @@ export default async function BlogPostPage({
 
       {(frontmatter as { draft?: boolean }).draft && (
         <p className="mb-4 text-xs text-terminal-amber">
-          {dict.blog.draftBadge} — {dict.studio.draftSaved}
+          [{dict.blog.draftBadge}]
         </p>
       )}
 
@@ -69,6 +70,13 @@ export default async function BlogPostPage({
           ),
         }}
       />
+
+      <Link
+        href={`/${locale}/blog`}
+        className="mt-8 inline-block text-sm text-terminal-dim hover:text-terminal-green"
+      >
+        <span className="prompt">{dict.blog.backToBlog} →</span>
+      </Link>
     </section>
   );
 }

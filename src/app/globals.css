@@ -167,3 +167,56 @@
   border-radius: 9999px;
   display: inline-block;
 }
+
+/* ---- .prose : rendu MDX des articles (fait main, sans plugin) ---- */
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--terminal-green);
+  font-weight: 700;
+  margin-top: 1.75em;
+  margin-bottom: 0.5em;
+}
+.prose h2 {
+  font-size: 1.25rem;
+}
+.prose h3 {
+  font-size: 1.05rem;
+}
+.prose p {
+  margin: 0.8em 0;
+  line-height: 1.75;
+}
+.prose ul {
+  list-style: none;
+  padding-left: 1.1rem;
+  margin: 0.8em 0;
+}
+.prose li {
+  position: relative;
+  margin: 0.3em 0;
+}
+.prose li::before {
+  content: "▸ ";
+  color: var(--terminal-green);
+  position: absolute;
+  left: -1.1rem;
+}
+.prose a {
+  color: var(--terminal-green);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.prose strong {
+  font-weight: 700;
+}
+.prose blockquote {
+  border-left: 2px solid var(--terminal-green);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--terminal-dim);
+}
+.prose hr {
+  border-color: var(--border);
+  margin: 1.5rem 0;
+}

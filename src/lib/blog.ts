@@ -23,8 +23,14 @@ function minutesOf(markdown: string): number {
 /**
  * Blog posts for a locale, newest first.
  * MDX files live in content/blog/<locale>/<slug>.mdx (frontmatter + body).
+ * Drafts are hidden from listings by default; `getBlogPost` opts in so
+ * owners can preview a draft via its direct URL.
  */
-export function getBlogPosts(locale: string, limit?: number): BlogPost[] {
+export function getBlogPosts(
+  locale: string,
+  limit?: number,
+  includeDrafts = false,
+): BlogPost[] {
   const dir = path.join(CONTENT_DIR, locale);
   if (!fs.existsSync(dir)) return [];
 
@@ -50,12 +56,13 @@ export function getBlogPosts(locale: string, limit?: number): BlogPost[] {
         minutes: minutesOf(content),
       } satisfies BlogPost;
     })
+    .filter((post) => includeDrafts || !post.draft)
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 
   return limit ? posts.slice(0, limit) : posts;
 }
 
 export function getBlogPost(locale: string, slug: string): BlogPost | null {
-  const posts = getBlogPosts(locale);
+  const posts = getBlogPosts(locale, undefined, true);
   return posts.find((p) => p.slug === slug) ?? null;
 }
