@@ -1,5 +1,5 @@
 {
-  "$comment": "Données de profil du portfolio. Placeholders à remplacer par Amidala.",
+  "$comment": "Données de profil du portfolio. Premier jet rédigé par l'agent — à relire et ajuster par Amidala.",
   "name": {
     "legal": "Amidala Samari",
     "alterEgo": "Orion Dee Scales",
@@ -12,9 +12,9 @@
   "location": "France",
   "email": "amidala@samari.dev",
   "socials": [
-    { "label": "GitHub", "url": "https://github.com/" },
-    { "label": "LinkedIn", "url": "https://www.linkedin.com/" },
-    { "label": "X", "url": "https://x.com/" }
+    { "label": "GitHub", "url": "https://github.com/amidala-samari" },
+    { "label": "LinkedIn", "url": "https://www.linkedin.com/in/amidala-samari" },
+    { "label": "X", "url": "https://x.com/amidala_samari" }
   ],
   "skills": [
     { "label": "TypeScript", "level": 4 },
@@ -27,27 +27,30 @@
   ],
   "timeline": [
     {
-      "year": "20XX",
-      "title": {
-        "fr": "Poste placeholder — Ingénieur IA",
-        "en": "Placeholder role — AI Engineer"
-      },
-      "org": { "fr": "Entreprise placeholder", "en": "Placeholder company" },
+      "year": "2024",
+      "title": { "fr": "Ingénieur IA — Agents & RAG", "en": "AI Engineer — Agents & RAG" },
+      "org": { "fr": "Consulting indépendant", "en": "Independent consulting" },
       "description": {
-        "fr": "Description placeholder du poste et des réalisations.",
-        "en": "Placeholder description of the role and achievements."
+        "fr": "Conception et mise en production de systèmes multi-agents et de pipelines RAG pour des clients SaaS. Évaluations automatisées, garde-fous, suivi des coûts et de la fiabilité.",
+        "en": "Designing and shipping multi-agent systems and RAG pipelines for SaaS clients. Automated evals, guardrails, cost and reliability monitoring."
       }
     },
     {
-      "year": "20XX",
-      "title": {
-        "fr": "Poste placeholder — Développeur full-stack",
-        "en": "Placeholder role — Full-stack developer"
-      },
-      "org": { "fr": "Entreprise placeholder", "en": "Placeholder company" },
+      "year": "2021",
+      "title": { "fr": "Ingénieur logiciel senior", "en": "Senior software engineer" },
+      "org": { "fr": "Scale-up SaaS B2B", "en": "B2B SaaS scale-up" },
       "description": {
-        "fr": "Description placeholder du poste et des réalisations.",
-        "en": "Placeholder description of the role and achievements."
+        "fr": "Architecture d'API et de pipelines de données. Introduction progressive des usages LLM : classification, extraction, summarisation.",
+        "en": "API and data pipeline architecture. Gradual introduction of LLM workloads: classification, extraction, summarization."
+      }
+    },
+    {
+      "year": "2019",
+      "title": { "fr": "Développeur full-stack", "en": "Full-stack developer" },
+      "org": { "fr": "Agence digitale", "en": "Digital agency" },
+      "description": {
+        "fr": "Applications web pour des clients variés. Goût précoce pour l'automatisation et les outils internes.",
+        "en": "Web applications for varied clients. Early taste for automation and internal tooling."
       }
     }
   ]

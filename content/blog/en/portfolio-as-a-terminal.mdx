@@ -1,0 +1,35 @@
+---
+title: "Why this portfolio looks like a terminal"
+date: "2026-09-24"
+excerpt: "A terminal-shaped portfolio is not a decorative wink. It is the most honest way to show what an agent engineer's day actually looks like."
+tags: ["portfolio", "agents", "nextjs"]
+---
+
+Most engineering portfolios look like sales brochures: full-bleed hero, rounded cards, gradients. Pretty, interchangeable, and a little dishonest. A terminal, on the other hand, says what it does and does what it says.
+
+## A terminal does not cheat
+
+When a command fails, the terminal shows an error. No discreet spinner, no message softened by marketing: a stack trace, an exit code, the truth. That is the mindset I apply to AI agent systems. A reliable agent is one whose logs you can read, whose drift you can measure, and which you can stop when a guardrail trips.
+
+This site holds itself to the same rule. Every section is a command: `cat about.md` for the background, `ls -la ~/projects/` for the work, `tail -f ~/guestbook.log` for the guestbook. Content is not dressed up — it is executed.
+
+## Consistency with the craft
+
+I spend my days in terminals: running evaluation pipelines, reading multi-agent orchestrator traces, inspecting Postgres databases. A Next.js portfolio that imitates my tmux pane is not a gimmick: it is the engine room, open to visitors.
+
+Behind the aesthetic, the mechanics follow:
+
+- blog posts are MDX files versioned in the repository;
+- projects are served by a Supabase mini-CMS with Row Level Security — only published projects are readable;
+- the guestbook writes to Postgres then sits in a moderation queue, exactly like an agent awaiting approval;
+- a built-in studio lets my writing agent, eve, generate drafts that land marked `draft` — never published without a review.
+
+## Reliability over spectacle
+
+You judge an agent system by what it does when things go wrong: context too long, tool unavailable, a model inventing an API. A portfolio is the same. The version you are reading is built by the same tooling as any production build; if a page breaks, it breaks visibly instead of degrading silently.
+
+People sometimes confuse a sober interface with a lack of ambition. My job is to make autonomous systems predictable. The best demonstration is not an animation — it is verifiable behavior, page after page, command after command.
+
+## Look around
+
+Open the links, sign the guestbook, hunt for the 404s. Everything is here to be inspected. A portfolio, like a terminal, is only interesting if you linger long enough to type something.

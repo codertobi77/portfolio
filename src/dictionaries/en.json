@@ -34,7 +34,7 @@
   "about": {
     "title": "about",
     "command": "cat about.md",
-    "intro": "Placeholder — Amidala Samari's bio: background, vision on agent engineering, what drives me.",
+"intro": "AI & Agents Engineer, aka “Orion Dee Scales”. I design multi-agent systems and RAG pipelines that survive production: automated evals, guardrails, controlled costs. I write prompts like code — versioned, tested, measured. Before agents, years of software engineering: APIs, data, and the conviction that reliability is built, never improvised.",
     "identity": "Identity",
     "identityText": "Legal name: Amidala Samari. Creative alter ego: Orion Dee Scales.",
     "focusTitle": "Focus areas",
@@ -45,7 +45,7 @@
   "projects": {
     "title": "projects",
     "command": "ls -la ~/projects/",
-    "subtitle": "Placeholder — project selection (soon synced from the Supabase mini-CMS).",
+"subtitle": "Agent systems designed and operated in production — orchestration, RAG, evals.",
     "viewProject": "view project",
     "viewCode": "view code",
     "featured": "featured",
@@ -98,7 +98,7 @@
     "title": "cv",
     "command": "curl -O cv.pdf",
     "download": "download cv",
-    "placeholder": "CV placeholder — PDF version coming soon."
+"placeholder": "One page: background, stack, key projects. Updated: September 2026."
   },
   "studio": {
     "title": "studio",

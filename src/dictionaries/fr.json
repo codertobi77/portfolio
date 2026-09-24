@@ -34,7 +34,7 @@
   "about": {
     "title": "à-propos",
     "command": "cat about.md",
-    "intro": "Placeholder — bio d'Amidala Samari : parcours, vision de l'ingénierie des agents, ce qui me motive.",
+"intro": "Ingénieur IA & Agents, alias « Orion Dee Scales ». Je conçois des systèmes multi-agents et des pipelines RAG qui tiennent en production : évaluations automatisées, garde-fous, coûts maîtrisés. J'écris mes prompts comme du code — versionnés, testés, mesurés. Avant les agents, des années d'ingénierie logicielle : API, données, et la conviction que la fiabilité se construit, elle ne s'improvise pas.",
     "identity": "Identité",
     "identityText": "Nom légal : Amidala Samari. Alter ego créatif : Orion Dee Scales.",
     "focusTitle": "Axes de travail",
@@ -45,7 +45,7 @@
   "projects": {
     "title": "projets",
     "command": "ls -la ~/projets/",
-    "subtitle": "Placeholder — sélection de projets (bientôt synchronisés depuis le mini-CMS Supabase).",
+"subtitle": "Systèmes d'agents conçus et opérés en production — orchestration, RAG, évaluations.",
     "viewProject": "voir le projet",
     "viewCode": "voir le code",
     "featured": "à la une",
@@ -98,7 +98,7 @@
     "title": "cv",
     "command": "curl -O cv.pdf",
     "download": "télécharger le cv",
-    "placeholder": "CV placeholder — version PDF à venir."
+"placeholder": "Une page : parcours, stack, projets clés. Mise à jour : septembre 2026."
   },
   "studio": {
     "title": "studio",

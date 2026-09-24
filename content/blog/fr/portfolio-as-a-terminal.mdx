@@ -1,0 +1,35 @@
+---
+title: "Pourquoi ce portfolio ressemble à un terminal"
+date: "2026-09-24"
+excerpt: "Un portfolio en forme de terminal n'est pas un clin d'œil décoratif. C'est la manière la plus honnête de montrer le quotidien d'un ingénieur d'agents."
+tags: ["portfolio", "agents", "nextjs"]
+---
+
+La plupart des portfolios d'ingénieurs ressemblent à des plaquettes commerciales : hero plein écran, cartes arrondies, dégradés. Beaux, interchangeables, et un peu menteurs. Un terminal, lui, dit ce qu'il fait et fait ce qu'il dit.
+
+## Un terminal ne triche pas
+
+Quand une commande échoue, le terminal affiche une erreur. Pas de spinner discret, pas de message repensé par le marketing : une stack trace, un code de sortie, la vérité. C'est l'état d'esprit que j'applique aux systèmes d'agents IA. Un agent fiable est un agent dont on peut lire les logs, mesurer les dérives, et stopper quand un garde-fou claque.
+
+Ce site applique la règle à lui-même. Chaque section est une commande : `cat about.md` pour le parcours, `ls -la ~/projets/` pour les réalisations, `tail -f ~/guestbook.log` pour le livre d'or. Le contenu n'est pas habillé — il est exécuté.
+
+## Cohérence avec le métier
+
+Je passe mes journées dans des terminaux : lancer des pipelines d'évaluation, lire des traces d'orchestrateurs multi-agents, inspecter des bases Postgres. Un portfolio en Next.js qui imite ma fenêtre tmux n'est pas un gimmick : c'est la salle des machines, ouverte aux visiteurs.
+
+Derrière l'esthétique, la mécanique suit :
+
+- les articles du blog sont des fichiers MDX versionnés dans le dépôt ;
+- les projets sont servis par un mini-CMS Supabase avec Row Level Security — seuls les projets publiés sont lisibles ;
+- le livre d'or écrit dans Postgres puis passe par une file de modération, exactement comme un agent en attente d'approbation ;
+- un studio intégré permet à mon agent de rédaction, eve, de générer des drafts qui arrivent marqués `draft` — jamais publiés sans relecture.
+
+## Fiabilité avant spectacle
+
+Un système d'agents se juge à ce qu'il fait quand tout va mal : contexte trop long, outil indisponible, modèle qui invente une API. Le portfolio est pareil. La version que vous lisez est compilée par le même outillage que n'importe quel build de production ; si une page casse, elle casse visiblement, elle ne se dégrade pas en silence.
+
+On confond parfois « interface sobre » et « manque d'ambition ». Mon métier est de rendre des systèmes autonomes prévisibles. La meilleure démonstration n'est pas une animation — c'est un comportement vérifiable, page après page, commande après commande.
+
+## Fouillez
+
+Ouvrez les liens, signez le livre d'or, cherchez les 404. Tout est là pour être inspecté. Un portfolio, comme un terminal, n'a d'intérêt que si l'on s'y attarde assez pour taper quelque chose.
