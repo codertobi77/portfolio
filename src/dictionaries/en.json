@@ -121,7 +121,11 @@
     "toolFailed": "tool {name} failed",
     "toolAvailable": "tool {name} returned results",
     "approval": "approval required",
-    "cancel": "cancel"
+    "cancel": "cancel",
+    "you": "you",
+    "agentName": "eve",
+    "approve": "approve",
+    "error": "Something went wrong. Try again."
   },
   "ai": {
     "sectionGenerating": "generating…",

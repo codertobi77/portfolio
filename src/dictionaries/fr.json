@@ -116,12 +116,16 @@
     "loginError": "Passcode invalide",
     "logout": "déconnexion",
     "toolRunning": "outil en cours…",
-    "toolDone": « l'outil « {name} » a été exécuté avec succès »,
-    "toolDenied": « l'outil « {name} » a été refusé »,
-    "toolFailed": « l'outil « {name} » a échoué »,
-    "toolAvailable": « l'outil « {name} » a rendu ses résultats »,
-    "approval": « approbation requise »,
-    "cancel": « annuler »
+    "toolDone": "l'outil « {name} » a été exécuté avec succès",
+    "toolDenied": "l'outil « {name} » a été refusé",
+    "toolFailed": "l'outil « {name} » a échoué",
+    "toolAvailable": "l'outil « {name} » a rendu ses résultats",
+    "approval": "approbation requise",
+    "cancel": "annuler",
+    "you": "vous",
+    "agentName": "eve",
+    "approve": "approuver",
+    "error": "Une erreur est survenue. Réessayez."
   },
   "ai": {
     "sectionGenerating": "génération en cours…",

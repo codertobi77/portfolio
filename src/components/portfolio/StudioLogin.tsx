@@ -14,7 +14,6 @@ export function StudioLogin({ dict }: { dict: Dictionary }) {
     async (_, formData) => await loginStudio(formData),
     { ok: false },
   );
-  void state;
 
   return (
     <form action={action} className="space-y-4">
