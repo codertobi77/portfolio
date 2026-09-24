@@ -24,6 +24,12 @@ export function Footer({
           >
             {dict.guestbook.title}
           </Link>
+          <Link
+            href={`/${locale}/studio`}
+            className="hover:text-terminal-green"
+          >
+            {dict.studio.title}
+          </Link>
         </p>
       </div>
     </footer>
