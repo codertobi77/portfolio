@@ -1,6 +1,10 @@
 import { createHash, timingSafeEqual as cryptoTimingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
 import type { AuthFn } from "eve/channels/auth";
+
+// NOTE: keep this module free of `next/*` imports — it is pulled into the
+// eve authored-module bundle via agent/channels/eve.ts, and eve's ESM loader
+// cannot resolve Next's extensionless entrypoints. Server-only Next helpers
+// that need `next/headers` live in studio-session.ts instead.
 
 export const STUDIO_COOKIE = "studio_session";
 export const STUDIO_OWNER = "studio-owner";
@@ -30,13 +34,6 @@ export function studioToken(): string {
   return createHash("sha256")
     .update(`studio:${process.env.STUDIO_PASSCODE ?? ""}`)
     .digest("hex");
-}
-
-/** Server-side check used by the Studio page. */
-export async function isStudioOwner(): Promise<boolean> {
-  const store = await cookies();
-  const token = store.get(STUDIO_COOKIE)?.value;
-  return studioPasscodeConfigured() && token === studioToken();
 }
 
 /**

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasLocale, type Dictionary, type Locale } from "@/lib/i18n";
-import { isStudioOwner } from "@/lib/studio";
+import { isStudioOwner } from "@/lib/studio-session";
 import { StudioLogin, StudioLogout } from "@/components/portfolio/StudioLogin";
 import { StudioChat } from "@/components/portfolio/StudioChat";
 import { getDictionary } from "@/lib/i18n";

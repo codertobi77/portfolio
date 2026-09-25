@@ -5,11 +5,11 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import {
   STUDIO_COOKIE,
-  isStudioOwner,
   isValidPasscode,
   studioPasscodeConfigured,
   studioToken,
 } from "@/lib/studio";
+import { isStudioOwner } from "@/lib/studio-session";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1).max(100),

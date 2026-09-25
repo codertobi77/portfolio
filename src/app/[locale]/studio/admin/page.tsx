@@ -6,7 +6,7 @@ import {
   deleteGuestbookEntry,
 } from "@/lib/actions";
 import { getDictionary, hasLocale, type Dictionary } from "@/lib/i18n";
-import { isStudioOwner } from "@/lib/studio";
+import { isStudioOwner } from "@/lib/studio-session";
 
 interface GuestbookRow {
   id: string;
