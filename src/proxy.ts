@@ -10,8 +10,18 @@ function getLocale(request: NextRequest): string {
     "accept-language":
       request.headers.get("accept-language") ?? undefined,
   };
-  const languages = new Negotiator({ headers }).languages();
-  return match(languages, [...locales], defaultLocale);
+  // Negotiator yields ["*"] when the header is missing or wildcard-only;
+  // Intl.getCanonicalLocales (used by the matcher) throws RangeError on "*".
+  const languages = new Negotiator({ headers })
+    .languages()
+    .filter((lang) => lang && lang !== "*");
+  if (languages.length === 0) return defaultLocale;
+  try {
+    return match(languages, [...locales], defaultLocale);
+  } catch {
+    // Malformed tags (e.g. "fr-!!") also make Intl throw — never 500 here.
+    return defaultLocale;
+  }
 }
 
 export function proxy(request: NextRequest) {
