@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ScrollReveal } from "@/components/effects/ScrollReveal";
 import { getBlogPost } from "@/lib/blog";
 import { getDictionary, hasLocale, type Dictionary } from "@/lib/i18n";
 import { compileMDX } from "next-mdx-remote/rsc";
@@ -40,30 +41,37 @@ export default async function BlogPostPage({
 
   return (
     <section id={`blog-post-${slug}`} className="prose mx-auto max-w-xl scroll-mt-24">
-      <h1 className="mb-4 text-2xl font-bold">
-        <span className="text-terminal-dim">❯ </span>
-        <span className="glow text-terminal-green">{post.title}</span>
-      </h1>
-      <p className="mb-4 text-terminal-amber">
-        <span className="text-xs text-terminal-dim">{post.date}</span>
-        {" — "}
-        {post.minutes} {dict.blog.minutes}
-      </p>
+      <ScrollReveal>
+        <div>
+          <h1 className="mb-4 text-2xl font-bold">
+            <span className="text-terminal-dim">❯ </span>
+            <span className="glow text-terminal-green">{post.title}</span>
+          </h1>
+          <p className="mb-4 text-terminal-amber">
+            <span className="text-xs text-terminal-dim">{post.date}</span>
+            {" — "}
+            {post.minutes} {dict.blog.minutes}
+          </p>
 
-      {post.draft && (
-        <p className="mb-4 text-xs text-terminal-amber">
-          [{dict.blog.draftBadge}]
-        </p>
-      )}
+          {post.draft && (
+            <p className="mb-4 text-xs text-terminal-amber">
+              [{dict.blog.draftBadge}]
+            </p>
+          )}
+        </div>
+      </ScrollReveal>
 
-      {content}
+      {/* Corps MDX : rendu serveur statique, streaming au scroll. */}
+      <ScrollReveal>{content}</ScrollReveal>
 
-      <Link
-        href={`/${locale}/blog`}
-        className="mt-8 inline-block text-sm text-terminal-dim hover:text-terminal-green"
-      >
-        <span className="prompt">{dict.blog.backToBlog} →</span>
-      </Link>
+      <ScrollReveal>
+        <Link
+          href={`/${locale}/blog`}
+          className="mt-8 inline-block text-sm text-terminal-dim hover:text-terminal-green"
+        >
+          <span className="prompt">{dict.blog.backToBlog} →</span>
+        </Link>
+      </ScrollReveal>
     </section>
   );
 }

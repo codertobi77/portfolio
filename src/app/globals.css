@@ -220,3 +220,56 @@
   border-color: var(--border);
   margin: 1.5rem 0;
 }
+
+/* ---- ScrollReveal : streaming au scroll de tout le contenu ----
+   `.sr-pending` est posé par JS (jamais en SSR) : sans JS ou avec
+   prefers-reduced-motion, le contenu reste simplement visible.
+   Formes : fade-in + translate. Texte : spans `.sr-ch` (1 par caractère,
+   posés par JS après hydration) révélés en cascade façon terminal. */
+.sr-pending {
+  opacity: 0;
+  transform: translateY(0.6rem);
+}
+.sr-pending .sr-ch {
+  opacity: 0;
+}
+
+/* L'état révélé doit venir APRÈS .sr-pending (même spécificité) */
+.sr-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.5s ease-out var(--sr-delay, 0ms),
+    transform 0.5s ease-out var(--sr-delay, 0ms);
+}
+.sr-in .sr-ch {
+  opacity: 1;
+  transition: opacity 0.12s linear
+    calc(var(--sr-delay, 0ms) + min(var(--sr-i, 0) * 12ms, 950ms));
+}
+
+/* Entrées guestbook : fade-in à l'insertion (rendu client après fetch) */
+.gb-entry {
+  animation: sr-fade-in 0.5s ease-out both;
+}
+@keyframes sr-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sr-pending,
+  .sr-pending .sr-ch,
+  .gb-entry {
+    opacity: 1;
+    transform: none;
+    animation: none;
+    transition: none;
+  }
+}

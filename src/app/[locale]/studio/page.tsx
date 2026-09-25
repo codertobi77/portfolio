@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasLocale, type Dictionary, type Locale } from "@/lib/i18n";
+import { ScrollReveal } from "@/components/effects/ScrollReveal";
 import { isStudioOwner } from "@/lib/studio-session";
 import { StudioLogin, StudioLogout } from "@/components/portfolio/StudioLogin";
 import { StudioChat } from "@/components/portfolio/StudioChat";
@@ -20,17 +21,19 @@ export default async function StudioPage({
   return (
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">
-            <span className="text-terminal-dim">❯ </span>
-            <span className="glow text-terminal-green">
-              {dict.studio.title}
-            </span>
-          </h1>
-          <p className="mt-2 text-sm text-terminal-dim">
-            {dict.studio.subtitle}
-          </p>
-        </div>
+        <ScrollReveal>
+          <div>
+            <h1 className="text-2xl font-bold">
+              <span className="text-terminal-dim">❯ </span>
+              <span className="glow text-terminal-green">
+                {dict.studio.title}
+              </span>
+            </h1>
+            <p className="mt-2 text-sm text-terminal-dim">
+              {dict.studio.subtitle}
+            </p>
+          </div>
+        </ScrollReveal>
         {owner ? (
           <div className="flex items-center gap-4">
             <Link
@@ -49,13 +52,15 @@ export default async function StudioPage({
       {owner ? (
         <StudioChat dict={dict} locale={locale as Locale} owner />
       ) : (
-        <div className="rounded-lg border border-border bg-card p-6 text-sm text-terminal-dim">
-          <p className="mb-3">{dict.studio.subtitle}</p>
-          <p>
-            Sign in with your Studio passcode to unlock the owner tools
-            (including <code className="text-terminal-green">save_blog_draft</code>).
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="rounded-lg border border-border bg-card p-6 text-sm text-terminal-dim">
+            <p className="mb-3">{dict.studio.subtitle}</p>
+            <p>
+              Sign in with your Studio passcode to unlock the owner tools
+              (including <code className="text-terminal-green">save_blog_draft</code>).
+            </p>
+          </div>
+        </ScrollReveal>
       )}
     </div>
   );

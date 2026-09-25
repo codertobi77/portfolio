@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { TerminalWindow } from "@/components/terminal/TerminalWindow";
+import { ScrollReveal } from "@/components/effects/ScrollReveal";
 import type { Dictionary } from "@/lib/i18n";
 import type { Project } from "@/lib/supabase/projects";
 
@@ -13,75 +14,80 @@ export function Projects({
 }) {
   return (
     <section id="projects" className="scroll-mt-20">
-      <h2 className="mb-6 text-2xl font-bold">
-        <span className="text-terminal-dim">❯ </span>
-        <span className="glow text-terminal-green">{dict.projects.title}</span>
-      </h2>
+      <ScrollReveal>
+        <h2 className="mb-6 text-2xl font-bold">
+          <span className="text-terminal-dim">❯ </span>
+          <span className="glow text-terminal-green">{dict.projects.title}</span>
+        </h2>
 
-      <p className="mb-6 text-sm text-terminal-dim">
-        {dict.projects.subtitle}{" "}
-        <span className="text-terminal-cyan">[{dict.projects.source}]</span>
-      </p>
+        <p className="mb-6 text-sm text-terminal-dim">
+          {dict.projects.subtitle}{" "}
+          <span className="text-terminal-cyan">[{dict.projects.source}]</span>
+        </p>
+      </ScrollReveal>
 
       {projects.length === 0 ? (
-        <TerminalWindow command={dict.projects.command}>
-          <p className="text-terminal-amber">{dict.projects.empty}</p>
-        </TerminalWindow>
+        <ScrollReveal>
+          <TerminalWindow command={dict.projects.command}>
+            <p className="text-terminal-amber">{dict.projects.empty}</p>
+          </TerminalWindow>
+        </ScrollReveal>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {projects.map((project) => (
-            <TerminalWindow
-              key={project.id}
-              title={`~/projects/${project.slug}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-bold text-terminal-green">
-                  {project.title}
-                </h3>
-                {project.featured && (
-                  <Badge
-                    variant="outline"
-                    className="border-terminal-amber/50 text-terminal-amber"
-                  >
-                    {dict.projects.featured}
-                  </Badge>
-                )}
-              </div>
-              <p className="mt-2 mb-3 text-sm text-foreground/80">
-                {project.description}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {project.tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant="outline"
-                    className="border-terminal-cyan/40 text-xs text-terminal-cyan"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              {(project.url || project.repo_url) && (
-                <div className="mt-4 flex gap-4 text-xs">
-                  {project.url && (
-                    <Link
-                      href={project.url}
-                      className="text-terminal-green underline underline-offset-4 hover:glow"
+          {/* Données Supabase : le streaming s'applique aussi aux projets
+              issus de la base, pas seulement au contenu statique. */}
+          {projects.map((project, i) => (
+            <ScrollReveal key={project.id} delay={(i % 2) * 110}>
+              <TerminalWindow title={`~/projects/${project.slug}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-terminal-green">
+                    {project.title}
+                  </h3>
+                  {project.featured && (
+                    <Badge
+                      variant="outline"
+                      className="border-terminal-amber/50 text-terminal-amber"
                     >
-                      {dict.projects.viewProject} →
-                    </Link>
-                  )}
-                  {project.repo_url && (
-                    <Link
-                      href={project.repo_url}
-                      className="text-terminal-dim underline underline-offset-4 hover:text-terminal-green"
-                    >
-                      {dict.projects.viewCode} →
-                    </Link>
+                      {dict.projects.featured}
+                    </Badge>
                   )}
                 </div>
-              )}
-            </TerminalWindow>
+                <p className="mt-2 mb-3 text-sm text-foreground/80">
+                  {project.description}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {project.tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="outline"
+                      className="border-terminal-cyan/40 text-xs text-terminal-cyan"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+                {(project.url || project.repo_url) && (
+                  <div className="mt-4 flex gap-4 text-xs">
+                    {project.url && (
+                      <Link
+                        href={project.url}
+                        className="text-terminal-green underline underline-offset-4 hover:glow"
+                      >
+                        {dict.projects.viewProject} →
+                      </Link>
+                    )}
+                    {project.repo_url && (
+                      <Link
+                        href={project.repo_url}
+                        className="text-terminal-dim underline underline-offset-4 hover:text-terminal-green"
+                      >
+                        {dict.projects.viewCode} →
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </TerminalWindow>
+            </ScrollReveal>
           ))}
         </div>
       )}
