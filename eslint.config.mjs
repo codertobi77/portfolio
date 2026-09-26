@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated docs site, committed as-is:
     "doc/**",
+    // Generated eve runtime state (compiled snapshots) and Vercel state:
+    ".eve/**",
+    ".vercel/**",
   ]),
 ]);
 

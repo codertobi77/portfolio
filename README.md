@@ -17,8 +17,8 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 | `/{locale}/blog` | Index du blog (MDX) |
 | `/{locale}/blog/{slug}` | Article MDX bilingue |
 | `/{locale}/guestbook` | Livre d'or public, modéré (Supabase + RLS) |
-| `/{locale}/studio` | Démo de chat avec l'agent eve + accès propriétaire par passcode |
-| `/{locale}/studio/admin` | Administration : modération du livre d'or, boîte de réception contact |
+| `/{locale}/studio` | Terminal d'administration : CRUD du portfolio en commandes shell + agent eve (passcode propriétaire) |
+| `/{locale}/studio/admin` | Redirection vers `/{locale}/studio` (le shell remplace l'ancien dashboard) |
 | `/{locale}/cv.pdf` | CV en PDF |
 | `404` | Pages 404 personnalisées (segment `[locale]` + 404 globale bilingue) |
 
@@ -33,11 +33,30 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 
 ### Agent IA (eve)
 
-- **Chat public** : conversation avec l'agent sur `/{locale}/studio` (une régénération IA par section d'accueil et par session navigateur via `SectionShell`).
+- **Commande `eve <message>`** : conversation avec l'agent depuis le terminal du Studio (`/{locale}/studio`, session propriétaire) — réponse en streaming, approbation `save_blog_draft` via boutons inline ou `approve`/`deny`.
 - **Outil `save_blog_draft`** : réservé au propriétaire connecté — enregistre un brouillon d'article MDX dans `content/blog/{locale}/`.
 - **Modèle** : GLM 5.3 servi par **NVIDIA NIM** (endpoint OpenAI-compatible) via `@ai-sdk/openai-compatible`.
 - **Surface d'outils minimale** : `defaultTools: false` — l'agent n'a ni bash, ni accès fichier libre, ni web ; uniquement les outils déclarés dans `agent/tools/`.
 - **Authentification** : le cookie de session Studio authentifie le principal `studio-owner` auprès du canal eve (`src/lib/studio.ts`).
+
+### Studio shell (terminal d'admin)
+
+`/{locale}/studio` est un **vrai terminal** : après le passcode, tout le CRUD du portfolio se fait en commandes (sortie en anglais, convention shell). L'ancien dashboard `/studio/admin` redirige vers le shell.
+
+| Commande | Action |
+|---|---|
+| `projects list [--published] [--tag <t>]` · `projects show <réf>` | Liste / détail des projets |
+| `projects create --title <t> --description <d> [options]` | Création (`--title-en`, `--description-en`, `--slug`, `--tags a,b`, `--url`, `--repo-url`, `--featured`, `--published`, `--sort`) |
+| `projects edit <réf> --<champ> <v>…` · `publish` · `hide` · `delete <réf>` | Édition / publication / masquage / suppression — `<réf>` = slug, id ou préfixe ≥ 8 car. |
+| `guestbook list [--pending\|--approved]` · `guestbook show <id>` | Modération du livre d'or (défaut : en attente) |
+| `guestbook approve <id>…` · `guestbook delete <id>…` | Approuve / supprime (plusieurs ids d'un coup) |
+| `contact list [--limit <n>]` · `contact show <id>` · `contact delete <id>…` | Boîte de réception contact |
+| `blog list [--locale fr\|en] [--drafts]` · `blog show <slug>` | Articles MDX (lecture seule) |
+| `stats` · `whoami` · `help [commande]` | Compteurs, session, aide |
+| `eve <message>` | Chat avec l'agent eve (streaming + approbation `save_blog_draft`) |
+| `approve` · `deny` · `clear` · `logout` | Approbation en attente, écran, fin de session |
+
+Historique **↑/↓** (persisté par onglet), complétion **Tab** (commandes, sous-commandes, options), **Ctrl+L** (clear), **Ctrl+C** (vide la ligne). Implémentation : `src/lib/studio/shell/` — `parse.ts` (tokenizer guillemets/options), `registry.ts` (specs pour help + complétion), `exec.ts` (handlers, **aucun import `next/*`, dépendances injectées**) ; l'action serveur `runStudioCommand` (`src/lib/actions.ts`) applique la garde `isStudioOwner`, injecte le client service-role et `revalidatePath`.
 
 ### Internationalisation
 
@@ -76,7 +95,7 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 │   ├── components/
 │   │   ├── effects/          # ScrollReveal (IntersectionObserver + splitting texte)
 │   │   ├── layout/           # Navbar, Footer
-│   │   ├── portfolio/        # Hero, About, Projects, Guestbook, StudioChat, SectionShell…
+│   │   ├── portfolio/        # Hero, About, Projects, Guestbook, StudioTerminal, SectionShell…
 │   │   ├── terminal/         # TerminalWindow et primitives du thème
 │   │   └── ui/               # shadcn/ui (button, input, textarea…)
 │   ├── dictionaries/         # fr.json, en.json
@@ -85,7 +104,8 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 │       ├── blog.ts           # Lecture + parsing MDX du blog
 │       ├── studio.ts         # Passcode Studio, token cookie, auth eve (sans import next/*)
 │       ├── studio-session.ts  # isStudioOwner() (server-only, next/headers)
-│       ├── actions.ts        # Server Actions (contact, guestbook, studio login)
+│       ├── studio/shell/     # Couche shell : parse, registry (complétion Tab), exec (sans next/*)
+│       ├── actions.ts        # Server Actions (contact, guestbook, login, runStudioCommand)
 │       └── supabase/         # Client anon (public) + admin (service-role, server-only)
 ```
 
@@ -128,8 +148,8 @@ bun run dev         # ou : npm run dev → http://localhost:3000
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | client | pour Supabase | URL du projet Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client | pour Supabase | Clé publique (protégée par RLS) |
-| `SUPABASE_SERVICE_ROLE_KEY` | serveur | pour l'admin Studio | Contourne RLS — **jamais** côté client, uniquement via `src/lib/supabase/admin.ts` |
-| `STUDIO_PASSCODE` | serveur | pour le Studio | Passcode du propriétaire (login Studio + outil `save_blog_draft`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | serveur | pour le shell Studio | Contourne RLS — **jamais** côté client, uniquement via `src/lib/supabase/admin.ts` |
+| `STUDIO_PASSCODE` | serveur | pour le Studio | Passcode du propriétaire (terminal Studio + outil `save_blog_draft`) |
 | `NVIDIA_API_KEY` | serveur | pour l'agent | Clé NVIDIA NIM (endpoint OpenAI-compatible, GLM 5.3) |
 
 `.env.local` est gitigné — `.env.example` sert de référence versionnée.
@@ -149,9 +169,9 @@ Schéma dans `supabase/migrations/20260914000000_portfolio_init.sql` — **RLS a
 
 | Table | Accès anonyme | Modération |
 |---|---|---|
-| `projects` | `SELECT` des lignes `published = true` uniquement | Publication via Studio admin (service-role) |
-| `guestbook` | `INSERT` (toujours `approved = false`) + `SELECT` des seules entrées approuvées | Approbation/suppression dans `/studio/admin` |
-| `contact_messages` | `INSERT` uniquement — illisible publiquement | Boîte de réception dans `/studio/admin` |
+| `projects` | `SELECT` des lignes `published = true` uniquement | Publication via le shell Studio (service-role, `projects publish`) |
+| `guestbook` | `INSERT` (toujours `approved = false`) + `SELECT` des seules entrées approuvées | Approbation/suppression via le shell (`guestbook approve` / `delete`) |
+| `contact_messages` | `INSERT` uniquement — illisible publiquement | Boîte de réception via le shell (`contact list` / `show` / `delete`) |
 
 ### Modèle de sécurité
 

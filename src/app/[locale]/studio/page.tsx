@@ -1,12 +1,19 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { hasLocale, type Dictionary, type Locale } from "@/lib/i18n";
+import {
+  getDictionary,
+  hasLocale,
+  type Dictionary,
+  type Locale,
+} from "@/lib/i18n";
 import { ScrollReveal } from "@/components/effects/ScrollReveal";
 import { isStudioOwner } from "@/lib/studio-session";
 import { StudioLogin, StudioLogout } from "@/components/portfolio/StudioLogin";
-import { StudioChat } from "@/components/portfolio/StudioChat";
-import { getDictionary } from "@/lib/i18n";
+import { StudioTerminal } from "@/components/portfolio/StudioTerminal";
 
+/**
+ * Studio : terminal d'administration du portfolio. Non-owner → passcode ;
+ * owner → shell interactif (CRUD complet en commandes + agent eve).
+ */
 export default async function StudioPage({
   params,
 }: {
@@ -34,31 +41,17 @@ export default async function StudioPage({
             </p>
           </div>
         </ScrollReveal>
-        {owner ? (
-          <div className="flex items-center gap-4">
-            <Link
-              href={`/${locale}/studio/admin`}
-              className="text-xs text-terminal-dim underline-offset-4 hover:text-terminal-green hover:underline"
-            >
-              {dict.studio.admin.link} →
-            </Link>
-            <StudioLogout dict={dict} />
-          </div>
-        ) : (
-          <StudioLogin dict={dict} />
-        )}
+        {owner ? <StudioLogout dict={dict} /> : <StudioLogin dict={dict} />}
       </header>
 
       {owner ? (
-        <StudioChat dict={dict} locale={locale as Locale} owner />
+        <ScrollReveal mode="fade">
+          <StudioTerminal dict={dict} locale={locale as Locale} />
+        </ScrollReveal>
       ) : (
         <ScrollReveal>
           <div className="rounded-lg border border-border bg-card p-6 text-sm text-terminal-dim">
-            <p className="mb-3">{dict.studio.subtitle}</p>
-            <p>
-              Sign in with your Studio passcode to unlock the owner tools
-              (including <code className="text-terminal-green">save_blog_draft</code>).
-            </p>
+            <p>{dict.studio.infoCard}</p>
           </div>
         </ScrollReveal>
       )}

@@ -10,6 +10,8 @@ import {
   studioToken,
 } from "@/lib/studio";
 import { isStudioOwner } from "@/lib/studio-session";
+import { execStudioCommand } from "@/lib/studio/shell/exec";
+import type { StudioCommandResult } from "@/lib/studio/shell/types";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -27,22 +29,9 @@ function getOutcome(error: string | null): { ok: boolean; error?: string } {
   return error ? { ok: false, error } : { ok: true };
 }
 
-// ---- Studio admin (service-role, owner only) ----
+// ---- Studio shell (service-role, owner only) ----
 
-const idSchema = z.uuid();
 const adminLocaleSchema = z.enum(["fr", "en"]);
-
-/** Service-role client, only for authenticated Studio owners. */
-async function adminSupabase() {
-  if (!(await isStudioOwner())) return null;
-  const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
-  return getSupabaseAdminClient();
-}
-
-function revalidateAdmin(locale: string) {
-  revalidatePath(`/${locale}/studio/admin`);
-  revalidatePath(`/${locale}/guestbook`);
-}
 
 export async function submitContact(formData: FormData) {
   const parsed = contactSchema.safeParse({
@@ -115,53 +104,32 @@ export async function logoutStudio() {
   store.delete(STUDIO_COOKIE);
 }
 
-export async function approveGuestbookEntry(formData: FormData): Promise<void> {
-  const client = await adminSupabase();
-  if (!client) return;
+/**
+ * Runs one Studio shell command (projects / guestbook / contact / blog /
+ * stats / help / whoami) with the service-role client. Ownership is
+ * re-checked on every call; exec.ts owns parsing, validation and output.
+ */
+export async function runStudioCommand(
+  input: string,
+  locale: string,
+): Promise<StudioCommandResult> {
+  const loc = adminLocaleSchema.safeParse(locale);
+  if (!loc.success || !(await isStudioOwner())) {
+    return {
+      ok: false,
+      lines: [{ text: "permission denied: studio session required", kind: "err" }],
+    };
+  }
 
-  const id = idSchema.safeParse(formData.get("id"));
-  const locale = adminLocaleSchema.safeParse(formData.get("locale"));
-  if (!id.success || !locale.success) return;
+  const parsed = z.string().trim().min(1).max(2000).safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, lines: [{ text: "empty command", kind: "err" }] };
+  }
 
-  const { error } = await client
-    .from("guestbook")
-    .update({ approved: true })
-    .eq("id", id.data);
-  if (error) return;
-
-  revalidateAdmin(locale.data);
-}
-
-export async function deleteGuestbookEntry(formData: FormData): Promise<void> {
-  const client = await adminSupabase();
-  if (!client) return;
-
-  const id = idSchema.safeParse(formData.get("id"));
-  const locale = adminLocaleSchema.safeParse(formData.get("locale"));
-  if (!id.success || !locale.success) return;
-
-  const { error } = await client
-    .from("guestbook")
-    .delete()
-    .eq("id", id.data);
-  if (error) return;
-
-  revalidateAdmin(locale.data);
-}
-
-export async function deleteContactMessage(formData: FormData): Promise<void> {
-  const client = await adminSupabase();
-  if (!client) return;
-
-  const id = idSchema.safeParse(formData.get("id"));
-  const locale = adminLocaleSchema.safeParse(formData.get("locale"));
-  if (!id.success || !locale.success) return;
-
-  const { error } = await client
-    .from("contact_messages")
-    .delete()
-    .eq("id", id.data);
-  if (error) return;
-
-  revalidatePath(`/${locale.data}/studio/admin`);
+  const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
+  return execStudioCommand(parsed.data, {
+    supabase: getSupabaseAdminClient(),
+    locale: loc.data,
+    revalidate: (pathname) => revalidatePath(pathname),
+  });
 }
