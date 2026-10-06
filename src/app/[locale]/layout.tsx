@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { MotionBackground } from "@/components/effects/MotionBackground";
 import { hasLocale, locales, type Dictionary } from "@/lib/i18n";
 import "../globals.css";
 
@@ -58,10 +59,14 @@ export default async function RootLayout({
         <div className="crt-vignette" aria-hidden />
 
         <Navbar dict={dict} locale={locale} otherLocale={otherLocale} />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
-          {children}
-        </main>
-        <Footer dict={dict} locale={locale} />
+        {/* Fond animé sous le contenu : le wrapper passe en z-10. */}
+        <MotionBackground />
+        <div className="relative z-10 flex flex-1 flex-col">
+          <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">
+            {children}
+          </main>
+          <Footer dict={dict} locale={locale} />
+        </div>
         <Toaster />
       </body>
     </html>

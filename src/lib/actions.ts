@@ -11,7 +11,9 @@ import {
 } from "@/lib/studio";
 import { isStudioOwner } from "@/lib/studio-session";
 import { execStudioCommand } from "@/lib/studio/shell/exec";
-import type { StudioCommandResult } from "@/lib/studio/shell/types";
+import { ShellParseError, tokenize } from "@/lib/studio/shell/parse";
+import { sudoCommands } from "@/lib/studio/shell/registry";
+import type { ShellLine, StudioCommandResult } from "@/lib/studio/shell/types";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -29,9 +31,25 @@ function getOutcome(error: string | null): { ok: boolean; error?: string } {
   return error ? { ok: false, error } : { ok: true };
 }
 
-// ---- Studio shell (service-role, owner only) ----
+// ---- Studio shell (public reads, sudo-gated mutations) ----
 
 const adminLocaleSchema = z.enum(["fr", "en"]);
+
+/** sudo session lifetime — refreshed on every elevated command (rolling). */
+const SUDO_MAX_AGE_SECONDS = 15 * 60;
+
+const SUDO_PROMPT: ShellLine = { text: "[sudo] password for dee:", kind: "dim" };
+
+async function setSudoSession(): Promise<void> {
+  const store = await cookies();
+  store.set(STUDIO_COOKIE, studioToken(), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SUDO_MAX_AGE_SECONDS,
+  });
+}
 
 export async function submitContact(formData: FormData) {
   const parsed = contactSchema.safeParse({
@@ -82,43 +100,40 @@ export async function submitGuestbook(formData: FormData) {
   return getOutcome(error ? "failed" : null);
 }
 
-export async function loginStudio(formData: FormData) {
-  const passcode = String(formData.get("passcode") ?? "");
+/**
+ * `sudo <passcode>` — validate the passcode and open a 15-minute sudo
+ * session (the terminal calls this after the masked [sudo] prompt).
+ */
+export async function sudoAuth(passcode: string): Promise<{ ok: boolean }> {
   if (!studioPasscodeConfigured() || !isValidPasscode(passcode)) {
-    return { ok: false as const };
+    return { ok: false };
   }
-
-  const store = await cookies();
-  store.set(STUDIO_COOKIE, studioToken(), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
-  return { ok: true as const };
+  await setSudoSession();
+  return { ok: true };
 }
 
-export async function logoutStudio() {
+/** `sudo -k` — invalidate the sudo timestamp (idempotent, no session needed). */
+export async function sudoKill(): Promise<{ ok: true }> {
   const store = await cookies();
   store.delete(STUDIO_COOKIE);
+  return { ok: true };
 }
 
 /**
- * Runs one Studio shell command (projects / guestbook / contact / blog /
- * stats / help / whoami) with the service-role client. Ownership is
- * re-checked on every call; exec.ts owns parsing, validation and output.
+ * Runs one Studio shell command for anyone: reads are public, mutations
+ * need the `sudo` prefix AND a valid session. Without a session a sudo
+ * command returns `needsPassword` — the terminal prompts for the
+ * passcode (masked, 3 attempts), authenticates via sudoAuth, then
+ * retries the original line. exec.ts owns parsing, validation, output
+ * and the elevated-vs-guest guard.
  */
 export async function runStudioCommand(
   input: string,
   locale: string,
 ): Promise<StudioCommandResult> {
   const loc = adminLocaleSchema.safeParse(locale);
-  if (!loc.success || !(await isStudioOwner())) {
-    return {
-      ok: false,
-      lines: [{ text: "permission denied: studio session required", kind: "err" }],
-    };
+  if (!loc.success) {
+    return { ok: false, lines: [{ text: "unknown locale", kind: "err" }] };
   }
 
   const parsed = z.string().trim().min(1).max(2000).safeParse(input);
@@ -126,10 +141,68 @@ export async function runStudioCommand(
     return { ok: false, lines: [{ text: "empty command", kind: "err" }] };
   }
 
+  let tokens: string[];
+  try {
+    tokens = tokenize(parsed.data);
+  } catch (e) {
+    return {
+      ok: false,
+      lines: [
+        { text: e instanceof ShellParseError ? e.message : "parse error", kind: "err" },
+      ],
+    };
+  }
+
+  let command = parsed.data;
+  let elevated = false;
+
+  if (tokens[0] === "sudo") {
+    const inner = tokens.slice(1);
+    const flag = inner[0];
+    if (!flag) {
+      return { ok: false, lines: [{ text: "usage: sudo [-k|-v|-l] [command]", kind: "err" }] };
+    }
+
+    // `sudo -k` kills the timestamp whether or not a session exists.
+    if (flag === "-k") {
+      const store = await cookies();
+      store.delete(STUDIO_COOKIE);
+      return { ok: true, lines: [{ text: "sudo: session invalidated", kind: "ok" }] };
+    }
+
+    // Every other sudo path needs a valid session: without one the
+    // terminal shows the masked prompt, authenticates, then retries.
+    if (!(await isStudioOwner())) {
+      return { ok: false, needsPassword: true, lines: [SUDO_PROMPT] };
+    }
+    await setSudoSession(); // rolling 15-minute window, like sudo's timestamp
+
+    if (flag === "-v") {
+      return {
+        ok: true,
+        lines: [{ text: "sudo: timestamp refreshed — valid for 15 min", kind: "ok" }],
+      };
+    }
+    if (flag === "-l") {
+      return {
+        ok: true,
+        lines: [
+          { text: "User dee may run the following commands on studio:" },
+          { text: "    (ALL) ALL", kind: "dim" },
+          { text: `    ${sudoCommands().join(", ")}`, kind: "dim" },
+        ],
+      };
+    }
+
+    elevated = true;
+    command = inner.join(" ");
+  }
+
   const { getSupabaseAdminClient } = await import("@/lib/supabase/admin");
-  return execStudioCommand(parsed.data, {
+  return execStudioCommand(command, {
     supabase: getSupabaseAdminClient(),
     locale: loc.data,
     revalidate: (pathname) => revalidatePath(pathname),
+    elevated,
   });
 }

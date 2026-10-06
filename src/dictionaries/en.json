@@ -23,13 +23,23 @@
       "AI & Agents Engineer"
     ],
     "greeting": "Hi, I'm",
-    "name": "Amidala Samari",
-    "aka": "aka “Orion Dee Scales”",
-    "role": "AI & Agents Engineer",
     "pitch": "I design and operate reliable AI agent systems: multi-agent orchestration, RAG, evaluations and generative interfaces.",
     "cta": "view my projects",
     "ctaSecondary": "get in touch",
-    "statusLine": "status: open to opportunities"
+    "statusLabel": "status:",
+    "portraitAlt": "Portrait of Amidala Samari",
+    "portraitMeta": "-rw-r--r--  1 dee  studio  portrait.jpg"
+  },
+  "directory": {
+    "command": "ls -la ~/",
+    "entries": {
+      "about": { "desc": "who I am, how I work" },
+      "projects": { "desc": "agent systems running in production" },
+      "blog": { "desc": "technical notes — agents, LLMs, RAG" },
+      "cv": { "desc": "the full path, one page" },
+      "contact": { "desc": "write to me — email, socials, form" },
+      "guestbook": { "desc": "leave a trace of your visit" }
+    }
   },
   "about": {
     "title": "about",
@@ -40,7 +50,26 @@
     "focusTitle": "Focus areas",
     "focus": ["AI agent orchestration", "RAG & semantic search", "Evals & guardrails", "Generative interfaces"],
     "valuesTitle": "What matters",
-    "values": ["Reliability over spectacle", "Data over opinions", "Tools over hype"]
+    "values": ["Reliability over spectacle", "Data over opinions", "Tools over hype"],
+    "methodTitle": "Method",
+    "method": [
+      "evals are specified before the demo",
+      "prompts, tools and guardrails versioned like code",
+      "cost and latency measured on every iteration"
+    ],
+    "skillsTitle": "Stack & skills",
+    "skillsNote": "bars = self-assessed level (▮▮▮▮▯)",
+    "timelineTitle": "Path",
+    "timelineCommand": "history --reverse",
+    "nowTitle": "Now",
+    "nowText": "Independent consultant: agent systems, RAG and evals for SaaS clients. The rest of the time I write technical notes on this blog.",
+    "statsTitle": "stats",
+    "stats": {
+      "skills": "skills",
+      "milestones": "milestones",
+      "years": "years of practice",
+      "posts": "posts"
+    }
   },
   "projects": {
     "title": "projects",
@@ -50,7 +79,19 @@
     "viewCode": "view code",
     "featured": "featured",
     "empty": "Projects syncing…",
-    "source": "source: Supabase"
+    "source": "source: Supabase",
+    "statsTitle": "stats",
+    "stats": {
+      "published": "published projects",
+      "featured": "featured",
+      "tags": "technologies"
+    },
+    "processTitle": "how they're built",
+    "process": [
+      "evals and guardrails before shipping",
+      "short iterations, continuous measurement",
+      "docs and runbooks written for the human on call"
+    ]
   },
   "blog": {
     "title": "blog",
@@ -92,27 +133,46 @@
     "sending": "sending…",
     "success": "Message sent! I'll get back to you soon.",
     "error": "Failed to send. Try again or use the direct email.",
-    "emailDirect": "or directly:"
+    "emailDirect": "or directly:",
+    "fingerCommand": "finger dee",
+    "socialsTitle": "elsewhere",
+    "responseTitle": "response time",
+    "responseText": "Usually within 48 business hours — faster if it's about agents."
   },
   "cv": {
     "title": "cv",
     "command": "curl -O cv.pdf",
+    "summaryTitle": "at a glance",
+    "summary": [
+      "AI & agents engineer — multi-agent systems and RAG in production",
+      "path: agency → B2B SaaS scale-up → agent consulting",
+      "stack: TypeScript, Python, Next.js, Supabase, evals"
+    ],
+    "skillsTitle": "skills",
+    "timelineTitle": "experience",
     "download": "download cv",
-"placeholder": "One page: background, stack, key projects. Updated: September 2026."
+    "downloadNote": "PDF · one page · updated Sept. 2026",
+    "printHint": "lpr -P studio cv.pdf"
   },
   "studio": {
     "title": "studio",
-    "subtitle": "Admin terminal: the whole portfolio as shell commands.",
-    "passcode": "Passcode",
-    "passcodePlaceholder": "your passcode…",
-    "login": "sign in",
-    "logout": "sign out",
+    "subtitle": "The portfolio terminal: reads are public, mutations need sudo.",
     "approve": "approve",
     "cancel": "cancel",
     "terminal": {
-      "placeholder": "command… (help)"
+      "placeholder": "command… (help · sudo -l)"
     },
-    "infoCard": "Sign in with your Studio passcode to open the admin terminal: full project CRUD, guestbook moderation, contact inbox and the eve agent."
+    "boot": {
+      "lines": [
+        "dee@studio login: dee",
+        "password: ****",
+        "[ ok ] mounting /projects …",
+        "[ ok ] loading eve kernel module …",
+        "[ ok ] opening guestbook.log …",
+        "studio v2.0 ready"
+      ],
+      "session": "[sudo] session: active"
+    }
   },
   "ai": {
     "sectionGenerating": "generating…",

@@ -13,11 +13,15 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 
 | Route | Contenu |
 |---|---|
-| `/{locale}` | Accueil : hero animé, à-propos, projets (Supabase), articles, CV, contact |
+| `/{locale}` | Accueil : hero animé (texte + portrait « imprimé ») + annuaire façon `ls` vers les pages |
+| `/{locale}/about` | À-propos complet : persona, socials, skills, timeline (formes terminales) |
+| `/{locale}/projects` | Projets publiés (Supabase), cartes enrichies |
 | `/{locale}/blog` | Index du blog (MDX) |
 | `/{locale}/blog/{slug}` | Article MDX bilingue |
+| `/{locale}/cv` | CV : barres de niveau, timeline, boîtes ASCII |
+| `/{locale}/contact` | Contact : formulaire + coordonnées du persona |
 | `/{locale}/guestbook` | Livre d'or public, modéré (Supabase + RLS) |
-| `/{locale}/studio` | Terminal d'administration : CRUD du portfolio en commandes shell + agent eve (passcode propriétaire) |
+| `/{locale}/studio` | Terminal **public** : lectures ouvertes, mutations via `sudo` + agent eve (REPL) ; séquence de boot au chargement |
 | `/{locale}/studio/admin` | Redirection vers `/{locale}/studio` (le shell remplace l'ancien dashboard) |
 | `/{locale}/cv.pdf` | CV en PDF |
 | `404` | Pages 404 personnalisées (segment `[locale]` + 404 globale bilingue) |
@@ -26,6 +30,9 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 
 - **CRT** : scanlines et vignette en surimpression (`globals.css`).
 - **TypeWriter / BootSequence** : hero animé façon démarrage de machine.
+- **PortraitPrint** (`src/components/effects/PortraitPrint.tsx`) : le portrait du hero est « imprimé » ligne par ligne au chargement (~1,5 s, scanline brillante en tête de balayage, gris + teinte phosphore) — l'`<img>` est rendue côté serveur (SEO/no-JS), `prefers-reduced-motion` → image directe.
+- **MotionBackground** (`src/components/effects/MotionBackground.tsx`) : pluie de glyphes matrice subtile sur toutes les pages (`0 1 { } < > # $`, vert phosphore ~8 % d'opacité, ~24 fps, pause si onglet caché, rien sous `prefers-reduced-motion`).
+- **StudioBoot** (`src/components/portfolio/StudioBoot.tsx`) : overlay de boot plein écran sur `/studio` (~2,5 s — clic/Échap pour passer, jamais rendu côté serveur, désactivé sous `prefers-reduced-motion`).
 - **ScrollReveal** (`src/components/effects/ScrollReveal.tsx`) : effet de streaming appliqué à **tous** les éléments des pages — y compris le contenu statique et les données issues de Supabase. Chaque bloc visible est révélé progressivement au scroll :
   - mode `stream` : le texte est découpé caractère par caractère (`IntersectionObserver`) et se révèle en cascade façon terminal ;
   - mode `fade` : fondu + translation pour les blocs interactifs (formulaires, composants stateful) ;
@@ -33,30 +40,44 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 
 ### Agent IA (eve)
 
-- **Commande `eve <message>`** : conversation avec l'agent depuis le terminal du Studio (`/{locale}/studio`, session propriétaire) — réponse en streaming, approbation `save_blog_draft` via boutons inline ou `approve`/`deny`.
-- **Outil `save_blog_draft`** : réservé au propriétaire connecté — enregistre un brouillon d'article MDX dans `content/blog/{locale}/`.
+- **REPL `sudo eve`** : l'agent vit dans son propre shell (`eve@studio:~ ❯`), entré via `sudo eve` (ou `eve` si la session sudo est active) — sortie par `exit`/`quit`/Ctrl+D (`logout — back to dee@studio`). Réponse en streaming, approbation `save_blog_draft` via boutons inline ou `approve`/`deny`.
+- **Outil `save_blog_draft`** : réservé au propriétaire — enregistre un brouillon d'article MDX dans `content/blog/{locale}/`. Le cookie de session sudo est vérifié **à chaque appel** : après expiration (15 min), l'outil est refusé → retaper `sudo <cmd>` pour rouvrir une session puis relancer `eve`.
+- **Repli statique** : sans `NVIDIA_API_KEY` (situation actuelle en prod), le REPL eve répond via le repli statique — aucune clé n'est requise pour naviguer.
 - **Modèle** : GLM 5.3 servi par **NVIDIA NIM** (endpoint OpenAI-compatible) via `@ai-sdk/openai-compatible`.
 - **Surface d'outils minimale** : `defaultTools: false` — l'agent n'a ni bash, ni accès fichier libre, ni web ; uniquement les outils déclarés dans `agent/tools/`.
 - **Authentification** : le cookie de session Studio authentifie le principal `studio-owner` auprès du canal eve (`src/lib/studio.ts`).
 
-### Studio shell (terminal d'admin)
+### Studio shell (terminal public, mutations via sudo)
 
-`/{locale}/studio` est un **vrai terminal** : après le passcode, tout le CRUD du portfolio se fait en commandes (sortie en anglais, convention shell). L'ancien dashboard `/studio/admin` redirige vers le shell.
+`/{locale}/studio` est un **vrai terminal ouvert à tous** (sortie en anglais, convention shell) : les **lectures** (`list`/`show`/`stats`/`profile show`/`blog list`…) sont publiques ; chaque **mutation** exige le préfixe `sudo`, même avec une session valide — fidèle à un vrai shell. Sans session valide, la réponse serveur porte `needsPassword` → le terminal affiche `[sudo] password for dee:` (saisie masquée, 3 tentatives, Échap/Ctrl+C annule). La session (cookie `studio_session`, SHA-256 du passcode, httpOnly) dure **15 min** et est **rafraîchie à chaque commande sudo** (timestamp roulant) ; `sudo -k` l'invalide, `sudo -v` la valide, `sudo -l` liste les droits.
+
+> **Conséquence assumée du modèle public** : la boîte contact, les entrées guestbook en attente, les projets non publiés et les drafts blog sont lisibles par quiconque tape les commandes de lecture.
 
 | Commande | Action |
 |---|---|
-| `projects list [--published] [--tag <t>]` · `projects show <réf>` | Liste / détail des projets |
-| `projects create --title <t> --description <d> [options]` | Création (`--title-en`, `--description-en`, `--slug`, `--tags a,b`, `--url`, `--repo-url`, `--featured`, `--published`, `--sort`) |
-| `projects edit <réf> --<champ> <v>…` · `publish` · `hide` · `delete <réf>` | Édition / publication / masquage / suppression — `<réf>` = slug, id ou préfixe ≥ 8 car. |
-| `guestbook list [--pending\|--approved]` · `guestbook show <id>` | Modération du livre d'or (défaut : en attente) |
-| `guestbook approve <id>…` · `guestbook delete <id>…` | Approuve / supprime (plusieurs ids d'un coup) |
-| `contact list [--limit <n>]` · `contact show <id>` · `contact delete <id>…` | Boîte de réception contact |
+| `help [commande]` | Aide — les commandes protégées sont marquées `*` |
+| `projects list [--published] [--tag <t>]` · `projects show <réf>` | Lecture publique des projets — `<réf>` = slug, id ou préfixe ≥ 8 car. |
+| `sudo projects create …` | Création (`--title`, `--description`, `--title-en`, `--description-en`, `--slug`, `--tags a,b`, `--url`, `--repo-url`, `--featured`, `--published`, `--sort`) — **bare → wizard interactif** champ par champ |
+| `sudo projects edit <réf> …` · `sudo projects publish/hide/delete <réf>` | Édition / publication / masquage / suppression |
+| `guestbook list [--pending\|--approved]` · `guestbook show <id>` | Lecture publique du livre d'or |
+| `sudo guestbook approve <id>…` · `sudo guestbook delete <id>…` | Modération (plusieurs ids d'un coup) |
+| `contact list [--limit <n>]` · `contact show <id>` · `sudo contact delete <id>…` | Boîte de réception contact |
 | `blog list [--locale fr\|en] [--drafts]` · `blog show <slug>` | Articles MDX (lecture seule) |
-| `stats` · `whoami` · `help [commande]` | Compteurs, session, aide |
-| `eve <message>` | Chat avec l'agent eve (streaming + approbation `save_blog_draft`) |
-| `approve` · `deny` · `clear` · `logout` | Approbation en attente, écran, fin de session |
+| `profile show` | Persona fusionné (public) |
+| `sudo profile edit --role-fr… --alias --location --email --status-…` | Édition du persona — **bare → wizard** avec valeur courante par défaut |
+| `sudo profile social add --label --url` / `delete <label>` | Liens sociaux |
+| `sudo profile skill add --label --level <1-5>` / `edit` / `delete` | Compétences (barres de niveau) |
+| `sudo profile timeline add --year …` / `edit <year>` / `delete <year>` | Jalons de carrière — **bare add → wizard** |
+| `stats` · `whoami` · `sudo whoami` → `root` | Compteurs, principal courant |
+| `sudo eve [message]` | REPL de l'agent eve (`exit`/`quit`/Ctrl+D pour sortir) |
+| `sudo -k` · `sudo -v` · `sudo -l` | Invalide / valide / liste la session sudo |
+| `approve` · `deny` · `clear` | Approbation en attente, écran |
 
-Historique **↑/↓** (persisté par onglet), complétion **Tab** (commandes, sous-commandes, options), **Ctrl+L** (clear), **Ctrl+C** (vide la ligne). Implémentation : `src/lib/studio/shell/` — `parse.ts` (tokenizer guillemets/options), `registry.ts` (specs pour help + complétion), `exec.ts` (handlers, **aucun import `next/*`, dépendances injectées**) ; l'action serveur `runStudioCommand` (`src/lib/actions.ts`) applique la garde `isStudioOwner`, injecte le client service-role et `revalidatePath`.
+Le persona est stocké dans Supabase (`site_profile`, blob jsonb) et **remplace en bloc** le repli `content/profile.json` (deep-merge, tableaux remplacés) ; toute mutation revalide `/`, `/about`, `/cv`, `/contact`.
+
+Terminal : prompt `dee@studio:~/studio $`, **highlighting zsh** de la saisie et de l'echo (commande connue → vert, inconnue → rouge, sous-commande/option → cyan, guillemets et `sudo` → ambre ; `highlight.ts`, overlay synchronisé sur l'input transparent), machine à états `normal | sudo-password | wizard | eve-repl`, historique **↑/↓** (persisté par onglet), complétion **Tab** (commandes, sous-commandes, options — y compris après `sudo`), **Ctrl+L** (clear), **Ctrl+C** (annule la saisie en cours), séquence de boot au chargement de la page.
+
+Implémentation : `src/lib/studio/shell/` — `parse.ts` (tokenizer guillemets/options), `registry.ts` (source unique des droits `sudo` pour exec, help, `sudo -l` et complétion), `highlight.ts` (coloration isomorphe), `exec.ts` (handlers, garde `requiresSudo && !elevated`, **aucun import `next/*`, dépendances injectées**) ; l'action serveur `runStudioCommand` (`src/lib/actions.ts`) retire le préfixe `sudo`, gère `needsPassword` et la session roulante, injecte le client service-role et `revalidatePath`.
 
 ### Internationalisation
 
@@ -77,35 +98,36 @@ Historique **↑/↓** (persisté par onglet), complétion **Tab** (commandes, s
 
 ```
 ├── agent/                    # Agent eve
-│   ├── agent.ts              # defineAgent : modèle GLM 5.3 (NIM), contexte 1M tokens
+│   ├── agent.ts              # defineAgent : modèle GLM 5.3 (NVIDIA), contexte 1M tokens
 │   ├── instructions.md       # Prompt système de l'agent
 │   ├── tools/save_blog_draft.ts  # Outil owner-only : brouillon MDX
 │   └── channels/eve.ts       # Canal HTTP + auth propriétaire (cookie Studio)
 ├── content/
 │   ├── blog/{fr,en}/         # Articles MDX (frontmatter gray-matter)
-│   └── profile.json
+│   └── profile.json           # Persona par défaut (repli si Supabase absent/vide)
 ├── supabase/
-│   ├── migrations/           # Schéma initial : projects, guestbook, contact_messages (+RLS)
+│   ├── migrations/           # Schéma : projects, guestbook, contact_messages, site_profile (+RLS)
 │   └── seed.sql              # Données de démonstration
 ├── src/
 │   ├── app/
-│   │   ├── [locale]/         # Toutes les pages (home, blog, guestbook, studio)
+│   │   ├── [locale]/         # Pages : home (hero+annuaire), about, projects, blog, cv, contact, guestbook, studio
 │   │   ├── global-not-found.tsx  # 404 globale autonome (HTML complet, bilingue)
 │   │   └── globals.css       # Thème terminal + animations ScrollReveal/CRT
 │   ├── components/
-│   │   ├── effects/          # ScrollReveal (IntersectionObserver + splitting texte)
+│   │   ├── effects/          # ScrollReveal, PortraitPrint, MotionBackground (pluie matrice)
 │   │   ├── layout/           # Navbar, Footer
-│   │   ├── portfolio/        # Hero, About, Projects, Guestbook, StudioTerminal, SectionShell…
-│   │   ├── terminal/         # TerminalWindow et primitives du thème
+│   │   ├── portfolio/        # Hero, StudioTerminal v2 (machine à états), StudioBoot, pages/, SectionShell…
+│   │   ├── terminal/         # TerminalWindow, TypeWriter, BootSequence
 │   │   └── ui/               # shadcn/ui (button, input, textarea…)
-│   ├── dictionaries/         # fr.json, en.json
+│   ├── dictionaries/         # fr.json, en.json (contenu riche bilingue, lignes de boot)
 │   └── lib/
 │       ├── i18n.ts / locales.ts
 │       ├── blog.ts           # Lecture + parsing MDX du blog
+│       ├── profile.ts        # getSiteProfile : deep-merge profile.json + site_profile (repli silencieux)
 │       ├── studio.ts         # Passcode Studio, token cookie, auth eve (sans import next/*)
 │       ├── studio-session.ts  # isStudioOwner() (server-only, next/headers)
-│       ├── studio/shell/     # Couche shell : parse, registry (complétion Tab), exec (sans next/*)
-│       ├── actions.ts        # Server Actions (contact, guestbook, login, runStudioCommand)
+│       ├── studio/shell/     # Couche shell : parse, registry (droits sudo + complétion), exec (sans next/*), highlight (zsh)
+│       ├── actions.ts        # Server Actions (contact, guestbook, sudoAuth/sudoKill, runStudioCommand)
 │       └── supabase/         # Client anon (public) + admin (service-role, server-only)
 ```
 
@@ -140,7 +162,7 @@ psql "$SUPABASE_DB_URL" -f supabase/seed.sql         # données de démo
 bun run dev         # ou : npm run dev → http://localhost:3000
 ```
 
-> **Note — mode dégradé** : sans configuration Supabase, le site fonctionne quand même avec des projets de remplacement et le livre d'or/contact répondent « non configuré ». Sans `NVIDIA_API_KEY`, l'agent échoue et le site retombe sur le contenu statique.
+> **Note — mode dégradé** : sans configuration Supabase (ou DB injoignable), le site fonctionne quand même avec des projets de remplacement, le livre d'or/contact répondent « non configuré » et le persona repasse sur `content/profile.json`. Sans `NVIDIA_API_KEY`, l'agent échoue et le site retombe sur le contenu statique.
 
 ### Variables d'environnement (`.env.local`)
 
@@ -165,17 +187,19 @@ bun run dev         # ou : npm run dev → http://localhost:3000
 
 ## Base de données et sécurité
 
-Schéma dans `supabase/migrations/20260914000000_portfolio_init.sql` — **RLS activée sur toutes les tables** :
+Schéma dans `supabase/migrations/` (`20260914000000_portfolio_init.sql`, `20260926184200_site_profile.sql`) — **RLS activée sur toutes les tables** :
 
 | Table | Accès anonyme | Modération |
 |---|---|---|
 | `projects` | `SELECT` des lignes `published = true` uniquement | Publication via le shell Studio (service-role, `projects publish`) |
 | `guestbook` | `INSERT` (toujours `approved = false`) + `SELECT` des seules entrées approuvées | Approbation/suppression via le shell (`guestbook approve` / `delete`) |
 | `contact_messages` | `INSERT` uniquement — illisible publiquement | Boîte de réception via le shell (`contact list` / `show` / `delete`) |
+| `site_profile` | `SELECT` (persona public — non sensible) | Écriture owner-only via le shell (`profile …`, service-role) — aucun write public |
 
 ### Modèle de sécurité
 
 - **Clé service-role** : server-side uniquement (jamais préfixée `NEXT_PUBLIC_`, importée uniquement depuis `src/lib/supabase/admin.ts`, réservée au propriétaire Studio authentifié).
+- **Modèle sudo** : les lectures du shell sont publiques ; chaque mutation exige le préfixe `sudo` **et** une session valide (15 min, rafraîchie à chaque commande élevée). La garde vit côté serveur (`exec.ts` : `requiresSudo && !elevated`) — le terminal n'est jamais une source de confiance.
 - **Passcode Studio** : comparaison en temps constant sur digests SHA-256 (aucune fuite temporelle) ; le cookie `studio_session` contient le SHA-256 du passcode préfixé — jamais le secret en clair.
 - **Agent** : `defaultTools: false` ; l'outil `save_blog_draft` vérifie le principal `studio-owner` — les visiteurs anonymes sont refusés.
 - **Zod** : validation stricte des entrées (Server Actions, tool inputs, contraintes SQL sur les longueurs).

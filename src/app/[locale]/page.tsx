@@ -1,16 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Hero } from "@/components/portfolio/Hero";
-import { About } from "@/components/portfolio/About";
-import { Projects } from "@/components/portfolio/Projects";
-import {
-  BlogTeaser,
-  ContactSection,
-  CvSection,
-} from "@/components/portfolio/Sections";
-import { SectionShell } from "@/components/portfolio/SectionShell";
-import { getDictionary, hasLocale, type Dictionary, type Locale } from "@/lib/i18n";
-import { getPublishedProjects } from "@/lib/supabase/projects";
-import { getBlogPosts } from "@/lib/blog";
+import { ScrollReveal } from "@/components/effects/ScrollReveal";
+import { getDictionary, hasLocale } from "@/lib/i18n";
+import { getSiteProfile } from "@/lib/profile";
+import { getSupabaseAnonClient } from "@/lib/supabase/client";
 
 export default async function HomePage({
   params,
@@ -18,67 +12,54 @@ export default async function HomePage({
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
 
-  const dict = (await getDictionary()) as Dictionary;
-  const [projects, posts] = await Promise.all([
-    getPublishedProjects(locale),
-    getBlogPosts(locale, 3),
-  ]);
+  const dict = await getDictionary();
+  const profile = await getSiteProfile(getSupabaseAnonClient());
 
-  const sectionPrompt = (section: string, data: unknown) =>
-    `Regenerate the "${section}" section content of the portfolio in ${
-      locale === "fr" ? "French" : "English"
-    }. Improve wording only; keep all names, facts and links. Data: ${JSON.stringify(
-      data,
-    ).slice(0, 4000)}`;
+  // La home reste courte : hero + annuaire. Chaque entrée vit dans sa page.
+  const entries = [
+    { slug: "about", desc: dict.directory.entries.about.desc },
+    { slug: "projects", desc: dict.directory.entries.projects.desc },
+    { slug: "blog", desc: dict.directory.entries.blog.desc },
+    { slug: "cv", desc: dict.directory.entries.cv.desc },
+    { slug: "contact", desc: dict.directory.entries.contact.desc },
+    { slug: "guestbook", desc: dict.directory.entries.guestbook.desc },
+  ];
 
   return (
-    <div className="flex flex-col gap-20">
-      <Hero dict={dict} />
+    <div className="flex flex-col gap-16">
+      <Hero dict={dict} locale={locale} profile={profile} />
 
-      <SectionShell
-        sectionId="about"
-        dict={dict}
-        prompt={sectionPrompt("about", {
-          intro: dict.about.intro,
-          identity: dict.about.identityText,
-          focus: dict.about.focus,
-          values: dict.about.values,
-        })}
-        context={{ locale, section: "about" }}
-      >
-        <About dict={dict} locale={locale as Locale} />
-      </SectionShell>
-
-      <SectionShell
-        sectionId="projects"
-        dict={dict}
-        prompt={sectionPrompt("projects", {
-          subtitle: dict.projects.subtitle,
-          projects: projects.map((p) => ({
-            title: p.title,
-            description: p.description,
-            tags: p.tags,
-          })),
-        })}
-        context={{ locale, section: "projects" }}
-      >
-        <Projects dict={dict} projects={projects} />
-      </SectionShell>
-
-      <SectionShell
-        sectionId="blog"
-        dict={dict}
-        prompt={sectionPrompt("blog", {
-          subtitle: dict.blog.subtitle,
-          posts: posts.map((p) => ({ title: p.title, excerpt: p.excerpt })),
-        })}
-        context={{ locale, section: "blog" }}
-      >
-        <BlogTeaser dict={dict} locale={locale as Locale} posts={posts} />
-      </SectionShell>
-
-      <CvSection dict={dict} />
-      <ContactSection dict={dict} />
+      <section aria-label={dict.directory.command}>
+        <ScrollReveal>
+          <h2 className="mb-6 text-2xl font-bold">
+            <span className="text-terminal-dim">❯ </span>
+            <span className="glow text-terminal-green">
+              {dict.directory.command}
+            </span>
+          </h2>
+        </ScrollReveal>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {entries.map((entry, i) => (
+            <ScrollReveal key={entry.slug} delay={i * 60}>
+              <Link
+                href={`/${locale}/${entry.slug}`}
+                className="group block border border-border bg-card p-4 transition-colors hover:border-terminal-green/60"
+              >
+                <p className="text-sm">
+                  <span className="text-terminal-dim">drwxr-xr-x</span>{" "}
+                  <span className="text-terminal-green group-hover:glow">
+                    {entry.slug}/
+                  </span>
+                </p>
+                <p className="mt-2 text-xs text-foreground/70">{entry.desc}</p>
+                <p className="mt-3 text-xs text-terminal-dim transition-colors group-hover:text-terminal-green">
+                  cd {entry.slug}/ →
+                </p>
+              </Link>
+            </ScrollReveal>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

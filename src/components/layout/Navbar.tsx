@@ -14,21 +14,18 @@ interface NavbarProps {
 export function Navbar({ dict, locale, otherLocale }: NavbarProps) {
   const pathname = usePathname() || `/${locale}`;
 
-  // Single-page scroll: about/projects/contact are anchors on the home page.
+  // Multi-pages : chaque section du portfolio vit sur sa propre route.
   const links = [
     { href: `/${locale}`, label: dict.nav.home, exact: true },
-    { href: `/${locale}#about`, label: dict.nav.about, exact: false },
-    { href: `/${locale}#projects`, label: dict.nav.projects, exact: false },
-    { href: `/${locale}#blog-link`, label: dict.nav.blog, exact: false },
-    { href: `/${locale}#contact`, label: dict.nav.contact, exact: false },
-    { href: `/${locale}#cv`, label: dict.nav.cv, exact: false },
+    { href: `/${locale}/about`, label: dict.nav.about, exact: false },
+    { href: `/${locale}/projects`, label: dict.nav.projects, exact: false },
+    { href: `/${locale}/blog`, label: dict.nav.blog, exact: false },
+    { href: `/${locale}/cv`, label: dict.nav.cv, exact: false },
+    { href: `/${locale}/contact`, label: dict.nav.contact, exact: false },
   ];
 
-  const isActive = (href: string, exact: boolean) => {
-    const [path, hash] = href.split("#");
-    if (hash) return false; // hash links are not "active pages"
-    return exact ? pathname === path : pathname.startsWith(path);
-  };
+  const isActive = (href: string, exact: boolean) =>
+    exact ? pathname === href : pathname.startsWith(href);
 
   // Same page in the other locale: replace the first path segment
   const segments = pathname.split("/");

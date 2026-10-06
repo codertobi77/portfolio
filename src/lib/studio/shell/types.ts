@@ -19,6 +19,11 @@ export interface ShellLine {
 export interface StudioCommandResult {
   ok: boolean;
   lines: ShellLine[];
+  /**
+   * Set when a `sudo <command>` hit the server without a valid session:
+   * the terminal prompts for the passcode, authenticates, then retries.
+   */
+  needsPassword?: boolean;
 }
 
 /**
@@ -34,4 +39,10 @@ export interface CommandDeps {
   locale: "fr" | "en";
   /** revalidatePath() wrapper — mutations refresh affected public pages. */
   revalidate: (pathname: string) => void;
+  /**
+   * True when the action stripped a `sudo` prefix AND the session cookie
+   * validates — i.e. the command may run elevated. Everything else runs
+   * as the guest principal (reads only; mutations are refused by exec.ts).
+   */
+  elevated: boolean;
 }

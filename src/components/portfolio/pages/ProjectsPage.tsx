@@ -2,28 +2,54 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { TerminalWindow } from "@/components/terminal/TerminalWindow";
 import { ScrollReveal } from "@/components/effects/ScrollReveal";
+import { PageHeading, StatsGrid } from "./blocks";
 import type { Dictionary } from "@/lib/i18n";
 import type { Project } from "@/lib/supabase/projects";
 
-export function Projects({
+export function ProjectsPage({
   dict,
   projects,
 }: {
   dict: Dictionary;
   projects: Project[];
 }) {
-  return (
-    <section id="projects" className="scroll-mt-20">
-      <ScrollReveal>
-        <h2 className="mb-6 text-2xl font-bold">
-          <span className="text-terminal-dim">❯ </span>
-          <span className="glow text-terminal-green">{dict.projects.title}</span>
-        </h2>
+  const tags = new Set(projects.flatMap((p) => p.tags));
+  const stats = [
+    { value: projects.length, label: dict.projects.stats.published },
+    {
+      value: projects.filter((p) => p.featured).length,
+      label: dict.projects.stats.featured,
+    },
+    { value: tags.size, label: dict.projects.stats.tags },
+  ];
 
-        <p className="mb-6 text-sm text-terminal-dim">
+  return (
+    <div className="flex flex-col gap-8">
+      <ScrollReveal>
+        <PageHeading title={dict.projects.title} />
+        <p className="mt-2 text-sm text-terminal-dim">
           {dict.projects.subtitle}{" "}
           <span className="text-terminal-cyan">[{dict.projects.source}]</span>
         </p>
+      </ScrollReveal>
+
+      <ScrollReveal>
+        <TerminalWindow title={dict.projects.statsTitle}>
+          <StatsGrid stats={stats} cols={3} />
+        </TerminalWindow>
+      </ScrollReveal>
+
+      <ScrollReveal>
+        <TerminalWindow title={dict.projects.processTitle}>
+          <ol className="space-y-1">
+            {dict.projects.process.map((step, i) => (
+              <li key={step} className="text-foreground/90">
+                <span className="text-terminal-dim">{i + 1}. </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </TerminalWindow>
       </ScrollReveal>
 
       {projects.length === 0 ? (
@@ -34,8 +60,6 @@ export function Projects({
         </ScrollReveal>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Données Supabase : le streaming s'applique aussi aux projets
-              issus de la base, pas seulement au contenu statique. */}
           {projects.map((project, i) => (
             <ScrollReveal key={project.id} delay={(i % 2) * 110}>
               <TerminalWindow title={`~/projects/${project.slug}`}>
@@ -91,6 +115,6 @@ export function Projects({
           ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }

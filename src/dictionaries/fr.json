@@ -23,13 +23,23 @@
       "Ingénieur IA & Agents"
     ],
     "greeting": "Bonjour, je suis",
-    "name": "Amidala Samari",
-    "aka": "alias « Orion Dee Scales »",
-    "role": "Ingénieur IA & Agents",
     "pitch": "Je conçois et j'opère des systèmes d'agents IA fiables : orchestration multi-agents, RAG, évaluations et interfaces génératives.",
     "cta": "voir mes projets",
     "ctaSecondary": "me contacter",
-    "statusLine": "statut : ouvert aux opportunités"
+    "statusLabel": "statut :",
+    "portraitAlt": "Portrait d'Amidala Samari",
+    "portraitMeta": "-rw-r--r--  1 dee  studio  portrait.jpg"
+  },
+  "directory": {
+    "command": "ls -la ~/",
+    "entries": {
+      "about": { "desc": "qui je suis, ma méthode" },
+      "projects": { "desc": "systèmes d'agents en production" },
+      "blog": { "desc": "notes techniques — agents, LLM, RAG" },
+      "cv": { "desc": "le parcours complet, une page" },
+      "contact": { "desc": "écrivez-moi — email, réseaux, formulaire" },
+      "guestbook": { "desc": "laissez une trace de votre passage" }
+    }
   },
   "about": {
     "title": "à-propos",
@@ -40,7 +50,26 @@
     "focusTitle": "Axes de travail",
     "focus": ["Orchestration d'agents IA", "RAG & recherche sémantique", "Évaluations & garde-fous", "Interfaces génératives"],
     "valuesTitle": "Ce qui compte",
-    "values": ["Fiabilité avant spectacle", "Données avant opinions", "Outils avant hype"]
+    "values": ["Fiabilité avant spectacle", "Données avant opinions", "Outils avant hype"],
+    "methodTitle": "Méthode",
+    "method": [
+      "l'évaluation se spécifie avant la démo",
+      "prompts, outils et garde-fous versionnés comme du code",
+      "coûts et latences mesurés à chaque itération"
+    ],
+    "skillsTitle": "Stack & compétences",
+    "skillsNote": "barres = niveau auto-évalué (▮▮▮▮▯)",
+    "timelineTitle": "Parcours",
+    "timelineCommand": "history --reverse",
+    "nowTitle": "Maintenant",
+    "nowText": "Consultant indépendant : systèmes d'agents, RAG et évaluations pour des clients SaaS. Le reste du temps, j'écris des notes techniques sur ce blog.",
+    "statsTitle": "stats",
+    "stats": {
+      "skills": "compétences",
+      "milestones": "jalons",
+      "years": "ans de pratique",
+      "posts": "articles"
+    }
   },
   "projects": {
     "title": "projets",
@@ -50,7 +79,19 @@
     "viewCode": "voir le code",
     "featured": "à la une",
     "empty": "Projets en cours de synchronisation…",
-    "source": "source : Supabase"
+    "source": "source : Supabase",
+    "statsTitle": "stats",
+    "stats": {
+      "published": "projets publiés",
+      "featured": "à la une",
+      "tags": "technologies"
+    },
+    "processTitle": "comment c'est construit",
+    "process": [
+      "évaluations et garde-fous avant la mise en production",
+      "itérations courtes, mesures continues",
+      "docs et runbooks écrits pour l'humain qui dépanne"
+    ]
   },
   "blog": {
     "title": "blog",
@@ -92,27 +133,46 @@
     "sending": "envoi…",
     "success": "Message envoyé ! Je vous répondrai bientôt.",
     "error": "Échec de l'envoi. Réessayez ou utilisez l'email direct.",
-    "emailDirect": "ou directement :"
+    "emailDirect": "ou directement :",
+    "fingerCommand": "finger dee",
+    "socialsTitle": "ailleurs",
+    "responseTitle": "délai de réponse",
+    "responseText": "En général sous 48 h ouvrées — plus vite si c'est un projet d'agents."
   },
   "cv": {
     "title": "cv",
     "command": "curl -O cv.pdf",
+    "summaryTitle": "en bref",
+    "summary": [
+      "ingénieur IA & agents — systèmes multi-agents et RAG en production",
+      "parcours : agence → scale-up SaaS → consulting agents",
+      "stack : TypeScript, Python, Next.js, Supabase, évaluations"
+    ],
+    "skillsTitle": "compétences",
+    "timelineTitle": "expérience",
     "download": "télécharger le cv",
-"placeholder": "Une page : parcours, stack, projets clés. Mise à jour : septembre 2026."
+    "downloadNote": "PDF · une page · mise à jour sept. 2026",
+    "printHint": "lpr -P studio cv.pdf"
   },
   "studio": {
     "title": "studio",
-    "subtitle": "Terminal d'administration : tout le portfolio en commandes shell.",
-    "passcode": "Passcode",
-    "passcodePlaceholder": "votre passcode…",
-    "login": "se connecter",
-    "logout": "déconnexion",
+    "subtitle": "Terminal du portfolio : lectures ouvertes à tous, mutations réservées à sudo.",
     "approve": "approuver",
     "cancel": "annuler",
     "terminal": {
-      "placeholder": "commande… (help)"
+      "placeholder": "commande… (help · sudo -l)"
     },
-    "infoCard": "Connectez-vous avec votre passcode Studio pour ouvrir le terminal d'administration : CRUD complet des projets, modération du livre d'or, messagerie de contact et agent eve."
+    "boot": {
+      "lines": [
+        "dee@studio login: dee",
+        "password: ****",
+        "[ ok ] mounting /projects …",
+        "[ ok ] loading eve kernel module …",
+        "[ ok ] opening guestbook.log …",
+        "studio v2.0 ready"
+      ],
+      "session": "[sudo] session: active"
+    }
   },
   "ai": {
     "sectionGenerating": "génération en cours…",

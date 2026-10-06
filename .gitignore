@@ -27,6 +27,9 @@
 # eve agent runtime state (cache, dev snapshots)
 .eve/
 
+# scratch shell tests (compiled harness + runner)
+/.scratch/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

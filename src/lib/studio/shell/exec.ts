@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { getBlogPost, getBlogPosts } from "../../blog";
+import { getSiteProfile, PROFILE_KEY, type SiteProfile } from "../../profile";
 import { ShellParseError, parseCommand, tokenize, type ParsedCommand } from "./parse";
-import { boolFlagsFor, findCommand, helpLines, usageLine } from "./registry";
+import { boolFlagsFor, findCommand, helpLines, requiresSudo, usageLine } from "./registry";
 import type { CommandDeps, ShellLine, StudioCommandResult } from "./types";
 
 /**
@@ -283,6 +284,17 @@ export async function execStudioCommand(
     if (unknown) return unknown;
   }
 
+  // Sudo guard — registry-driven single source of truth. The server action
+  // strips the `sudo` prefix and sets `elevated` only for a validated
+  // session, so a protected path reaching this point unelevated is refused.
+  if (requiresSudo(parsed.command, parsed.sub) && !deps.elevated) {
+    const cmdPath = parsed.sub ? `${parsed.command} ${parsed.sub}` : parsed.command;
+    return failure([
+      err(`${cmdPath}: permission denied`),
+      dim(`try: sudo ${cmdPath}`),
+    ]);
+  }
+
   switch (parsed.command) {
     case "help": {
       // tokens[1] always lands in `sub` (see parse.ts) — e.g. `help projects`.
@@ -303,8 +315,12 @@ export async function execStudioCommand(
       return cmdBlog(parsed, deps);
     case "stats":
       return cmdStats(deps);
+    case "profile":
+      return cmdProfile(parsed, deps);
     case "whoami":
-      return success([out("studio-owner")]);
+      // `sudo whoami` arrives here with elevated=true (the action strips
+      // the prefix) — faithful to the real binary's behaviour.
+      return success([out(deps.elevated ? "root" : "dee")]);
     default:
       return failure([
         err(`unknown command: ${parsed.command}`),
@@ -897,4 +913,411 @@ async function cmdStats(deps: CommandDeps): Promise<StudioCommandResult> {
     out(`  contact     ${ct} messages`),
     out(`  blog        fr ${blogFr} · en ${blogEn} posts`),
   ]);
+}
+
+// ---- profile (persona: role, status, socials, skills, timeline) ----
+
+/** User-facing profile mutation error (duplicate label, missing entry…). */
+class ProfileOpError extends Error {}
+
+/**
+ * The merged profile is rebuilt from scratch on every read, but when there
+ * are no overrides `getSiteProfile` returns DEFAULT_PROFILE **by reference** —
+ * mutations must never touch that module constant, hence the deep copy.
+ */
+function copyProfile(profile: SiteProfile): SiteProfile {
+  return JSON.parse(JSON.stringify(profile)) as SiteProfile;
+}
+
+/** Public pages that render persona data — refreshed after every mutation. */
+function revalidateProfile(deps: CommandDeps): void {
+  for (const path of ["", "/about", "/cv", "/contact"]) {
+    deps.revalidate(`/${deps.locale}${path}`);
+  }
+}
+
+/**
+ * Read the merged persona, apply a mutation, persist the complete blob to
+ * `site_profile` and refresh the pages that render it. The blob written is
+ * the full merged profile (plan decision): field-by-field overrides would
+ * make deletions inside arrays impossible to express.
+ */
+async function saveProfile(
+  deps: CommandDeps,
+  mutate: (profile: SiteProfile) => { profile: SiteProfile; message: string },
+): Promise<StudioCommandResult> {
+  const guard = requireSupabase(deps);
+  if (guard) return guard;
+  const client = deps.supabase as SupabaseClient;
+
+  const current = await getSiteProfile(client);
+  let change: { profile: SiteProfile; message: string };
+  try {
+    change = mutate(copyProfile(current));
+  } catch (e) {
+    if (e instanceof ProfileOpError) return failure([err(e.message)]);
+    throw e;
+  }
+
+  const res = await client
+    .from("site_profile")
+    .upsert({ key: PROFILE_KEY, data: change.profile, updated_at: new Date().toISOString() });
+  if (res.error) return failure([err(`database error: ${res.error.message}`)]);
+
+  revalidateProfile(deps);
+  return success([ok(change.message)]);
+}
+
+async function cmdProfile(
+  parsed: ParsedCommand,
+  deps: CommandDeps,
+): Promise<StudioCommandResult> {
+  switch (parsed.sub) {
+    case "show":
+      return profileShow(deps);
+    case "edit":
+      return profileEdit(parsed, deps);
+    case "social":
+      return profileSocial(parsed, deps);
+    case "skill":
+      return profileSkill(parsed, deps);
+    case "timeline":
+      return profileTimeline(parsed, deps);
+    default:
+      if (!parsed.sub) return success(helpLines("profile").map(out));
+      return failure([
+        err(`unknown subcommand: profile ${parsed.sub}`),
+        dim("type 'help profile'"),
+      ]);
+  }
+}
+
+async function profileShow(deps: CommandDeps): Promise<StudioCommandResult> {
+  // Works unconfigured too: getSiteProfile falls back to the seed profile.
+  const p = await getSiteProfile(deps.supabase);
+  const lines: Lines = [
+    head(`profile — ${p.name.legal} (aka ${p.name.alterEgo})`),
+    kv("handle", p.name.handle),
+    kv("role", `${p.role.fr} · ${p.role.en}`),
+    kv("status", `${p.status.fr} · ${p.status.en}`),
+    kv("location", p.location),
+    kv("email", p.email),
+  ];
+  if (p.socials.length > 0) {
+    lines.push(head("socials"));
+    for (const s of p.socials) lines.push(out(`  ${pad(s.label, 14)}${s.url}`));
+  }
+  if (p.skills.length > 0) {
+    lines.push(head("skills"));
+    for (const s of p.skills) {
+      lines.push(
+        out(`  ${pad(s.label, 22)}${"▮".repeat(s.level)}${"▯".repeat(5 - s.level)}  ${s.level}/5`),
+      );
+    }
+  }
+  if (p.timeline.length > 0) {
+    lines.push(head("timeline"));
+    for (const t of p.timeline) {
+      lines.push(out(`  ${t.year}  ${t.title.fr} — ${t.org.fr}`));
+      lines.push(dim(`        ${t.title.en} — ${t.org.en}`));
+    }
+  }
+  return success(lines);
+}
+
+const asTrimmed = (v: string | true | undefined): string =>
+  typeof v === "string" ? v.trim() : "";
+
+function findByLabel<T extends { label: string }>(items: T[], label: string): T | undefined {
+  const needle = label.toLowerCase();
+  return items.find((i) => i.label.toLowerCase() === needle);
+}
+
+const profileEditSchema = z.object({
+  "role-fr": z.string().trim().min(1).max(120).optional(),
+  "role-en": z.string().trim().min(1).max(120).optional(),
+  alias: z.string().trim().min(1).max(80).optional(),
+  location: z.string().trim().min(1).max(120).optional(),
+  email: z
+    .string()
+    .trim()
+    .min(3)
+    .max(200)
+    .refine((v) => v.includes("@"), "expected an email address")
+    .optional(),
+  "status-fr": z.string().trim().min(1).max(120).optional(),
+  "status-en": z.string().trim().min(1).max(120).optional(),
+});
+
+async function profileEdit(
+  parsed: ParsedCommand,
+  deps: CommandDeps,
+): Promise<StudioCommandResult> {
+  const fields = profileEditSchema.safeParse(parsed.options);
+  if (!fields.success) {
+    return failure([err(`invalid field values: ${issuesText(fields.error)}`)]);
+  }
+  const f = fields.data;
+  if (Object.values(f).every((v) => v === undefined)) {
+    // The terminal intercepts a bare `profile edit` and runs a wizard;
+    // this is the non-wizard fallback (API calls, scratch tests).
+    return failure([
+      err("nothing to edit — provide at least one --field"),
+      dim(usageLine("profile", "edit") ?? ""),
+    ]);
+  }
+  return saveProfile(deps, (p) => {
+    const touched: string[] = [];
+    if (f["role-fr"] !== undefined) {
+      p.role.fr = f["role-fr"];
+      touched.push("role-fr");
+    }
+    if (f["role-en"] !== undefined) {
+      p.role.en = f["role-en"];
+      touched.push("role-en");
+    }
+    if (f["status-fr"] !== undefined) {
+      p.status.fr = f["status-fr"];
+      touched.push("status-fr");
+    }
+    if (f["status-en"] !== undefined) {
+      p.status.en = f["status-en"];
+      touched.push("status-en");
+    }
+    if (f.alias !== undefined) {
+      p.name.alterEgo = f.alias;
+      touched.push("alias");
+    }
+    if (f.location !== undefined) {
+      p.location = f.location;
+      touched.push("location");
+    }
+    if (f.email !== undefined) {
+      p.email = f.email;
+      touched.push("email");
+    }
+    return { profile: p, message: `updated profile: ${touched.join(", ")}` };
+  });
+}
+
+async function profileSocial(
+  parsed: ParsedCommand,
+  deps: CommandDeps,
+): Promise<StudioCommandResult> {
+  // The nested action lands in positionals[0] — the parser is strictly
+  // two-level (command + subcommand).
+  const action = parsed.positionals[0];
+
+  if (action === "add") {
+    const label = asTrimmed(parsed.options.label);
+    const url = asTrimmed(parsed.options.url);
+    if (!label || !url) {
+      return failure([
+        err("profile social add needs --label and --url"),
+        dim(usageLine("profile", "social") ?? ""),
+      ]);
+    }
+    return saveProfile(deps, (p) => {
+      if (findByLabel(p.socials, label)) {
+        throw new ProfileOpError(`social already exists: ${label}`);
+      }
+      p.socials.push({ label, url });
+      return { profile: p, message: `added social ${label}` };
+    });
+  }
+
+  if (action === "delete") {
+    const label = parsed.positionals[1];
+    if (!label) return failure([err("profile social delete needs a <label>")]);
+    return saveProfile(deps, (p) => {
+      const next = p.socials.filter(
+        (s) => s.label.toLowerCase() !== label.toLowerCase(),
+      );
+      if (next.length === p.socials.length) {
+        throw new ProfileOpError(`social not found: ${label}`);
+      }
+      p.socials = next;
+      return { profile: p, message: `deleted social ${label}` };
+    });
+  }
+
+  return failure([err(usageLine("profile", "social") ?? "usage: profile social")]);
+}
+
+async function profileSkill(
+  parsed: ParsedCommand,
+  deps: CommandDeps,
+): Promise<StudioCommandResult> {
+  const action = parsed.positionals[0];
+  const parseLevel = (): number | StudioCommandResult => {
+    const res = z.coerce.number().int().min(1).max(5).safeParse(parsed.options.level);
+    return res.success ? res.data : failure([err("invalid --level: expected an integer 1–5")]);
+  };
+
+  if (action === "add") {
+    const label = asTrimmed(parsed.options.label);
+    if (!label) {
+      return failure([
+        err("profile skill add needs --label and --level"),
+        dim(usageLine("profile", "skill") ?? ""),
+      ]);
+    }
+    const level = parseLevel();
+    if (typeof level !== "number") return level;
+    return saveProfile(deps, (p) => {
+      if (findByLabel(p.skills, label)) {
+        throw new ProfileOpError(`skill already exists: ${label}`);
+      }
+      p.skills.push({ label, level });
+      return { profile: p, message: `added skill ${label} (${level}/5)` };
+    });
+  }
+
+  if (action === "edit") {
+    const label = parsed.positionals[1];
+    if (!label) {
+      return failure([err("profile skill edit needs <label> --level <n>")]);
+    }
+    const level = parseLevel();
+    if (typeof level !== "number") return level;
+    return saveProfile(deps, (p) => {
+      const skill = findByLabel(p.skills, label);
+      if (!skill) throw new ProfileOpError(`skill not found: ${label}`);
+      skill.level = level;
+      return { profile: p, message: `set ${skill.label} to level ${level}/5` };
+    });
+  }
+
+  if (action === "delete") {
+    const label = parsed.positionals[1];
+    if (!label) return failure([err("profile skill delete needs a <label>")]);
+    return saveProfile(deps, (p) => {
+      const skill = findByLabel(p.skills, label);
+      if (!skill) throw new ProfileOpError(`skill not found: ${label}`);
+      p.skills = p.skills.filter((s) => s !== skill);
+      return { profile: p, message: `deleted skill ${skill.label}` };
+    });
+  }
+
+  return failure([err(usageLine("profile", "skill") ?? "usage: profile skill")]);
+}
+
+const timelineFieldSchema = z.object({
+  year: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, "expected a 4-digit year")
+    .optional(),
+  "title-fr": z.string().trim().min(1).max(160).optional(),
+  "title-en": z.string().trim().min(1).max(160).optional(),
+  "org-fr": z.string().trim().min(1).max(160).optional(),
+  "org-en": z.string().trim().min(1).max(160).optional(),
+  "desc-fr": z.string().trim().min(1).max(600).optional(),
+  "desc-en": z.string().trim().min(1).max(600).optional(),
+});
+
+/** Keep milestones newest-first, matching the seed profile's ordering. */
+function sortTimeline(p: SiteProfile): void {
+  p.timeline.sort((a, b) => (a.year < b.year ? 1 : a.year > b.year ? -1 : 0));
+}
+
+async function profileTimeline(
+  parsed: ParsedCommand,
+  deps: CommandDeps,
+): Promise<StudioCommandResult> {
+  const action = parsed.positionals[0];
+  const fields = timelineFieldSchema.safeParse(parsed.options);
+  if (!fields.success) {
+    return failure([err(`invalid field values: ${issuesText(fields.error)}`)]);
+  }
+  const f = fields.data;
+
+  if (action === "add") {
+    const year = f.year;
+    const titleFr = f["title-fr"];
+    if (!year || !titleFr) {
+      // The terminal wizard covers the full flow; this is the API fallback.
+      return failure([
+        err("profile timeline add needs --year and --title-fr at minimum"),
+        dim(usageLine("profile", "timeline") ?? ""),
+      ]);
+    }
+    return saveProfile(deps, (p) => {
+      if (p.timeline.some((t) => t.year === year)) {
+        throw new ProfileOpError(`timeline already has an entry for ${year}`);
+      }
+      const orgFr = f["org-fr"] ?? "—";
+      const descFr = f["desc-fr"] ?? "—";
+      p.timeline.push({
+        year,
+        title: { fr: titleFr, en: f["title-en"] ?? titleFr },
+        org: { fr: orgFr, en: f["org-en"] ?? orgFr },
+        description: { fr: descFr, en: f["desc-en"] ?? descFr },
+      });
+      sortTimeline(p);
+      return { profile: p, message: `added timeline ${year}` };
+    });
+  }
+
+  if (action === "edit") {
+    const year = parsed.positionals[1];
+    if (!year) return failure([err("profile timeline edit needs a <year>")]);
+    const hasChange = Object.values(f).some((v) => v !== undefined);
+    if (!hasChange) {
+      return failure([
+        err("nothing to update — provide at least one --field"),
+        dim(usageLine("profile", "timeline") ?? ""),
+      ]);
+    }
+    return saveProfile(deps, (p) => {
+      const entry = p.timeline.find((t) => t.year === year);
+      if (!entry) throw new ProfileOpError(`no timeline entry for ${year}`);
+      const touched: string[] = [];
+      if (f.year !== undefined && f.year !== entry.year) {
+        entry.year = f.year;
+        touched.push("year");
+      }
+      if (f["title-fr"] !== undefined) {
+        entry.title.fr = f["title-fr"];
+        touched.push("title-fr");
+      }
+      if (f["title-en"] !== undefined) {
+        entry.title.en = f["title-en"];
+        touched.push("title-en");
+      }
+      if (f["org-fr"] !== undefined) {
+        entry.org.fr = f["org-fr"];
+        touched.push("org-fr");
+      }
+      if (f["org-en"] !== undefined) {
+        entry.org.en = f["org-en"];
+        touched.push("org-en");
+      }
+      if (f["desc-fr"] !== undefined) {
+        entry.description.fr = f["desc-fr"];
+        touched.push("desc-fr");
+      }
+      if (f["desc-en"] !== undefined) {
+        entry.description.en = f["desc-en"];
+        touched.push("desc-en");
+      }
+      sortTimeline(p);
+      return { profile: p, message: `updated timeline ${entry.year}: ${touched.join(", ")}` };
+    });
+  }
+
+  if (action === "delete") {
+    const year = parsed.positionals[1];
+    if (!year) return failure([err("profile timeline delete needs a <year>")]);
+    return saveProfile(deps, (p) => {
+      const next = p.timeline.filter((t) => t.year !== year);
+      if (next.length === p.timeline.length) {
+        throw new ProfileOpError(`no timeline entry for ${year}`);
+      }
+      p.timeline = next;
+      return { profile: p, message: `deleted timeline ${year}` };
+    });
+  }
+
+  return failure([err(usageLine("profile", "timeline") ?? "usage: profile timeline")]);
 }

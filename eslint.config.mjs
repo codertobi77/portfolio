@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     // Generated eve runtime state (compiled snapshots) and Vercel state:
     ".eve/**",
     ".vercel/**",
+    // Scratch shell tests: compiled CJS harness + runner (gitignored):
+    ".scratch/**",
   ]),
 ]);
 
