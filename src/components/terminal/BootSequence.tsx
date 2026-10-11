@@ -16,7 +16,7 @@ interface BootSequenceProps {
  */
 export function BootSequence({
   lines,
-  lineDelay = 500,
+  lineDelay = 750,
   className,
   onDone,
 }: BootSequenceProps) {

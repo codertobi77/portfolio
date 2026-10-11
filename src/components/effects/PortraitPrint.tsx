@@ -14,8 +14,8 @@ type Phase = "idle" | "printing" | "done";
 /**
  * Portrait « imprimé » par un terminal phosphore :
  * - l'<img> est rendue côté serveur (SEO, sans JS) ;
- * - au montage (sauf prefers-reduced-motion), un canvas recouvre l'image
- *   et la révèle ligne par ligne (~1,5 s) avec une scanline brillante en
+ *   au montage (sauf prefers-reduced-motion), un canvas recouvre l'image
+ *   et la révèle ligne par ligne (~2,6 s) avec une scanline brillante en
  *   tête de balayage — pixels pré-filtrés en gris + teinte phosphore ;
  * - à la fin, le canvas s'efface en douceur et laisse place à la photo.
  */
@@ -65,7 +65,7 @@ export function PortraitPrint({ src, alt, className }: PortraitPrintProps) {
       canvas.height = ch;
       setPhase("printing");
 
-      const duration = 1500;
+      const duration = 2600;
       const startedAt = performance.now();
       const draw = (now: number) => {
         if (cancelled) return;
@@ -114,7 +114,7 @@ export function PortraitPrint({ src, alt, className }: PortraitPrintProps) {
         ref={canvasRef}
         aria-hidden
         className={cn(
-          "absolute inset-0 h-full w-full transition-opacity duration-700",
+          "absolute inset-0 h-full w-full transition-opacity duration-1000",
           phase === "printing" ? "opacity-100" : "opacity-0",
         )}
       />

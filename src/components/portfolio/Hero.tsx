@@ -36,7 +36,7 @@ export function Hero({
             </p>
             {/* Le pitch a son propre effet TypeWriter : exclu de la découpe. */}
             <p className="mt-4 max-w-2xl text-foreground/90" data-no-stream>
-              <TypeWriter text={dict.hero.pitch} speed={18} />
+              <TypeWriter text={dict.hero.pitch} speed={28} />
             </p>
             <p className="mt-4 text-xs text-terminal-dim">
               <span className="text-terminal-green">❯</span>{" "}
@@ -60,7 +60,7 @@ export function Hero({
         </ScrollReveal>
 
         {/* Portrait « imprimé » ligne par ligne : fade seul (canvas/img). */}
-        <ScrollReveal mode="fade" delay={150}>
+        <ScrollReveal mode="fade" delay={220}>
           <TerminalWindow title="cat portrait.jpg">
             <PortraitPrint
               src="/images/portrait.jpg"
@@ -76,7 +76,7 @@ export function Hero({
       {/* La séquence de boot s'anime elle-même : fade seul, pas de découpe. */}
       <ScrollReveal mode="fade">
         <TerminalWindow title={dict.hero.bootTitle}>
-          <BootSequence lines={dict.hero.bootLines} lineDelay={420} />
+          <BootSequence lines={dict.hero.bootLines} lineDelay={640} />
         </TerminalWindow>
       </ScrollReveal>
     </section>

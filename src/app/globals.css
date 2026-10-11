@@ -239,18 +239,18 @@
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.5s ease-out var(--sr-delay, 0ms),
-    transform 0.5s ease-out var(--sr-delay, 0ms);
+    opacity 0.8s ease-out var(--sr-delay, 0ms),
+    transform 0.8s ease-out var(--sr-delay, 0ms);
 }
 .sr-in .sr-ch {
   opacity: 1;
-  transition: opacity 0.12s linear
-    calc(var(--sr-delay, 0ms) + min(var(--sr-i, 0) * 12ms, 950ms));
+  transition: opacity 0.2s linear
+    calc(var(--sr-delay, 0ms) + min(var(--sr-i, 0) * 18ms, 1500ms));
 }
 
 /* Entrées guestbook : fade-in à l'insertion (rendu client après fetch) */
 .gb-entry {
-  animation: sr-fade-in 0.5s ease-out both;
+  animation: sr-fade-in 0.8s ease-out both;
 }
 @keyframes sr-fade-in {
   from {

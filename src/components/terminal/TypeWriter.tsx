@@ -18,7 +18,7 @@ interface TypeWriterProps {
  */
 export function TypeWriter({
   text,
-  speed = 30,
+  speed = 45,
   startDelay = 0,
   className,
   caret = true,

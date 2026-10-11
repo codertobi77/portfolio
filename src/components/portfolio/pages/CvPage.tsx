@@ -42,7 +42,7 @@ export function CvPage({
           </TerminalWindow>
         </ScrollReveal>
 
-        <ScrollReveal delay={120}>
+        <ScrollReveal delay={180}>
           <TerminalWindow title={dict.cv.timelineTitle}>
             <TimelineRail entries={timeline} />
           </TerminalWindow>

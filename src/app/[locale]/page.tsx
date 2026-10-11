@@ -40,7 +40,7 @@ export default async function HomePage({
         </ScrollReveal>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map((entry, i) => (
-            <ScrollReveal key={entry.slug} delay={i * 60}>
+            <ScrollReveal key={entry.slug} delay={i * 90}>
               <Link
                 href={`/${locale}/${entry.slug}`}
                 className="group block border border-border bg-card p-4 transition-colors hover:border-terminal-green/60"

@@ -98,7 +98,7 @@ export function Guestbook({ dict }: { dict: Dictionary }) {
         </TerminalWindow>
       </ScrollReveal>
 
-      <ScrollReveal mode="fade" delay={120}>
+      <ScrollReveal mode="fade" delay={180}>
         <TerminalWindow title="tail -f ~/guestbook.log">
           {entries === null ? (
             <p className="text-terminal-dim">{dict.guestbook.loading}</p>

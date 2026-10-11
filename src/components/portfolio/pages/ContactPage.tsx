@@ -77,7 +77,7 @@ export function ContactPage({
           </TerminalWindow>
         </ScrollReveal>
 
-        <ScrollReveal delay={120}>
+        <ScrollReveal delay={180}>
           <TerminalWindow title={dict.contact.responseTitle}>
             <p className="text-sm text-foreground/90">
               {dict.contact.responseText}

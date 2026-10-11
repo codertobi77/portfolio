@@ -30,9 +30,9 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 
 - **CRT** : scanlines et vignette en surimpression (`globals.css`).
 - **TypeWriter / BootSequence** : hero animé façon démarrage de machine.
-- **PortraitPrint** (`src/components/effects/PortraitPrint.tsx`) : le portrait du hero est « imprimé » ligne par ligne au chargement (~1,5 s, scanline brillante en tête de balayage, gris + teinte phosphore) — l'`<img>` est rendue côté serveur (SEO/no-JS), `prefers-reduced-motion` → image directe.
-- **MotionBackground** (`src/components/effects/MotionBackground.tsx`) : pluie de glyphes matrice subtile sur toutes les pages (`0 1 { } < > # $`, vert phosphore ~8 % d'opacité, ~24 fps, pause si onglet caché, rien sous `prefers-reduced-motion`).
-- **StudioBoot** (`src/components/portfolio/StudioBoot.tsx`) : overlay de boot plein écran sur `/studio` (~2,5 s — clic/Échap pour passer, jamais rendu côté serveur, désactivé sous `prefers-reduced-motion`).
+- **PortraitPrint** (`src/components/effects/PortraitPrint.tsx`) : le portrait du hero est « imprimé » ligne par ligne au chargement (~2,6 s, scanline brillante en tête de balayage, gris + teinte phosphore) — l'`<img>` est rendue côté serveur (SEO/no-JS), `prefers-reduced-motion` → image directe.
+- **MotionBackground** (`src/components/effects/MotionBackground.tsx`) : pluie de glyphes matrice subtile sur toutes les pages (`0 1 { } < > # $`, vert phosphore ~13 % d'opacité, ~24 fps, pause si onglet caché, rien sous `prefers-reduced-motion`).
+- **StudioBoot** (`src/components/portfolio/StudioBoot.tsx`) : overlay de boot plein écran sur `/studio` (~5 s — clic/Échap pour passer, jamais rendu côté serveur, désactivé sous `prefers-reduced-motion`).
 - **ScrollReveal** (`src/components/effects/ScrollReveal.tsx`) : effet de streaming appliqué à **tous** les éléments des pages — y compris le contenu statique et les données issues de Supabase. Chaque bloc visible est révélé progressivement au scroll :
   - mode `stream` : le texte est découpé caractère par caractère (`IntersectionObserver`) et se révèle en cascade façon terminal ;
   - mode `fade` : fondu + translation pour les blocs interactifs (formulaires, composants stateful) ;
@@ -77,7 +77,7 @@ Le persona est stocké dans Supabase (`site_profile`, blob jsonb) et **remplace 
 
 ### v2.1 — Outils agent (opt-in au boot)
 
-L'agent eve reçoit un jeu d'outils couvrant **toutes les commandes de données du shell** — `exec.ts` reste la source unique de vérité. L'activation se choisit **au boot du Studio** : quand la séquence de démarrage se termine avec une session sudo active, l'overlay demande `[v2.1] eve studio tools: (y)es / (n)o — enter = last [<dernier choix>]`. `y`/`n` posent le cookie public `studio_agent_tools` (mirroir localStorage pour le prochain boot) ; clic/Échap garde le choix précédent ; `prefers-reduced-motion` passe l'overlay (choix précédent conservé).
+L'agent eve reçoit un jeu d'outils couvrant **toutes les commandes de données du shell** — `exec.ts` reste la source unique de vérité. L'activation se choisit **au boot du Studio** : chaque démarrage se termine par la question `[v2.1] eve studio tools: (y)es / (n)o — enter = last [<dernier choix>]`, posée à tous les visiteurs — le cookie public `studio_agent_tools` n'accorde rien par lui-même, c'est le couple owner + cookie (re-vérifié côté serveur à chaque tour) qui arme réellement les outils. Avec `y`, la dernière ligne du journal passe à `studio v2.1 ready`. `y`/`n` posent le cookie (mirroir localStorage pour le prochain boot) ; clic/Échap garde le choix précédent ; `prefers-reduced-motion` passe l'overlay (choix précédent conservé).
 
 | Outil | Commandes shell couvertes | Approbation |
 |---|---|---|

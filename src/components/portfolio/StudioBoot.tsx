@@ -15,19 +15,22 @@ interface StudioBootProps {
    *  valid sudo session (dict.studio.boot.session). */
   sessionLine?: string;
   /** v2.1 opt-in strings (dict.studio.boot.tools): the eve studio tools
-   *  choice offered at the end of the boot, owner session only. */
+   *  choice offered at the end of the boot — to everyone; the server gate
+   *  (owner + cookie) alone decides whether the tools are real. */
   tools: {
     ask: string;
     lastOn: string;
     lastOff: string;
     on: string;
     off: string;
+    /** Ready line replacing the last dict line when the choice is "on". */
+    readyOn: string;
   };
 }
 
-const LINE_DELAY_MS = 330; // per-line reveal → ~2.5 s for the full sequence
-const HOLD_MS = 400; // pause once the last line is up
-const FADE_MS = 350; // fade-out before unmount
+const LINE_DELAY_MS = 500; // per-line reveal → ~5 s for the full sequence
+const HOLD_MS = 900; // pause once the last line is up
+const FADE_MS = 500; // fade-out before unmount
 
 type Phase = "idle" | "playing" | "choice" | "leaving" | "done";
 
@@ -37,10 +40,12 @@ type Phase = "idle" | "playing" | "choice" | "leaving" | "done";
  * disables it entirely — and it never renders on the server, so
  * no-JavaScript visitors (and crawlers) see the page directly.
  *
- * v2.1: when the render found an active sudo session (sessionLine), the
- * boot ends with a one-shot opt-in for the eve studio tools — y/n picks,
- * Enter reuses the last choice (mirrored in localStorage, stored as the
- * non-httpOnly `studio_agent_tools` cookie read by studioOwnerAuth()).
+ * v2.1: the boot ends with the eve-studio-tools opt-in, offered to every
+ * visitor — y/n picks, Enter reuses the last choice (mirrored in
+ * localStorage, stored as the non-httpOnly `studio_agent_tools` cookie
+ * read by studioOwnerAuth()). The server gate (owner principal + cookie)
+ * alone decides whether the tools are actually registered; with the
+ * choice "on", the boot log's last line reads `tools.readyOn` (v2.1).
  * Click/Escape keeps the previous choice; reduced-motion skips the prompt
  * entirely and also keeps the previous choice (reload without reduced
  * motion to change it).
@@ -49,11 +54,21 @@ type Phase = "idle" | "playing" | "choice" | "leaving" | "done";
  * boot log is watched through the same phosphor filter as the rest.
  */
 export function StudioBoot({ lines, sessionLine, tools }: StudioBootProps) {
-  const all = sessionLine ? [...lines, sessionLine] : [...lines];
+  // Last boot choice, read at the first client render (SSR: null — the
+  // overlay renders nothing before mount, so there is no hydration
+  // mismatch). Drives the v2.1 ready line and the `enter = last` hint.
+  const [lastChoice] = useState<StudioToolsChoice | null>(() =>
+    readStudioToolsChoice(),
+  );
+  // With the tools armed, the log announces v2.1 instead of v2.0.
+  const baseLines =
+    lastChoice === "on" && lines.length > 0
+      ? [...lines.slice(0, -1), tools.readyOn]
+      : [...lines];
+  const all = sessionLine ? [...baseLines, sessionLine] : baseLines;
 
   const [visible, setVisible] = useState(0);
   const [phase, setPhase] = useState<Phase>("idle");
-  const [lastChoice, setLastChoice] = useState<StudioToolsChoice | null>(null);
   const [choiceLine, setChoiceLine] = useState<string | null>(null);
   const timersRef = useRef<number[]>([]);
 
@@ -87,13 +102,9 @@ export function StudioBoot({ lines, sessionLine, tools }: StudioBootProps) {
       window.setTimeout(
         () => {
           setVisible(all.length);
-          if (sessionLine) {
-            // v2.1 gate: only a booted owner gets the opt-in prompt.
-            setLastChoice(readStudioToolsChoice());
-            setPhase("choice");
-          } else {
-            setPhase("leaving");
-          }
+          // v2.1: the opt-in is offered at every boot — the server gate
+          // (owner + cookie) alone decides whether the tools are real.
+          setPhase("choice");
         },
         120 + all.length * LINE_DELAY_MS + HOLD_MS,
       ),

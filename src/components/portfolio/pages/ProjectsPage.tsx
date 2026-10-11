@@ -61,7 +61,7 @@ export function ProjectsPage({
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {projects.map((project, i) => (
-            <ScrollReveal key={project.id} delay={(i % 2) * 110}>
+            <ScrollReveal key={project.id} delay={(i % 2) * 170}>
               <TerminalWindow title={`~/projects/${project.slug}`}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-bold text-terminal-green">

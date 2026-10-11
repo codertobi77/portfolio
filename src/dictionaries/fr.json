@@ -177,7 +177,8 @@
         "lastOn": "— enter = last [on]",
         "lastOff": "— enter = last [off]",
         "on": "[v2.1] eve studio tools: enabled",
-        "off": "[v2.1] eve studio tools: disabled"
+        "off": "[v2.1] eve studio tools: disabled",
+        "readyOn": "studio v2.1 ready"
       }
     }
   },

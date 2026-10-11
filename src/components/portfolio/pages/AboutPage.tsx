@@ -100,7 +100,7 @@ export function AboutPage({
           </TerminalWindow>
         </ScrollReveal>
 
-        <ScrollReveal delay={120}>
+        <ScrollReveal delay={180}>
           <TerminalWindow title={dict.about.skillsTitle}>
             <SkillsBars skills={profile.skills} note={dict.about.skillsNote} />
           </TerminalWindow>

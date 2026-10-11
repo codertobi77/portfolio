@@ -3,15 +3,15 @@
 import { useEffect, useRef } from "react";
 
 const GLYPHS = ["0", "1", "{", "}", "<", ">", "#", "$"];
-const TAIL = 12; // glyphes par traînée
+const TAIL = 16; // glyphes par traînée
 const LINE_H = 15;
-const COL_W = 26;
+const COL_W = 18;
 
 /**
  * Pluie de glyphes façon matrice, en fond de tout le site.
  * - canvas fixed plein écran, z-0 sous le contenu (le wrapper de la
  *   page est en z-10), pointer-events-none, aria-hidden ;
- * - colonnes espacées, chute lente, vert phosphore très discret (~0.08) ;
+ * - colonnes denses, chute lente, vert phosphore discret (~0.13) ;
  * - ~24 fps, pause quand l'onglet est caché, re-layout au resize ;
  * - aucun rendu sous prefers-reduced-motion.
  */
@@ -45,9 +45,9 @@ export function MotionBackground() {
       canvas.height = Math.round(vh * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       columns = Array.from({ length: Math.ceil(vw / COL_W) }, (_, i) => ({
-        x: i * COL_W + 6,
+        x: i * COL_W + 5,
         y: Math.random() * vh * 2 - vh,
-        speed: 8 + Math.random() * 14,
+        speed: 5 + Math.random() * 9,
         glyphs: Array.from(
           { length: TAIL },
           () => GLYPHS[(Math.random() * GLYPHS.length) | 0],
@@ -73,14 +73,14 @@ export function MotionBackground() {
           col.y = -Math.random() * vh;
         }
         // mutation aléatoire d'un glyphe de la traînée
-        if (Math.random() < 0.2) {
+        if (Math.random() < 0.25) {
           col.glyphs[(Math.random() * col.glyphs.length) | 0] =
             GLYPHS[(Math.random() * GLYPHS.length) | 0];
         }
         for (let i = 0; i < TAIL; i++) {
           const gy = col.y - i * LINE_H;
           if (gy < -LINE_H || gy > vh + LINE_H) continue;
-          const alpha = i === 0 ? 0.16 : 0.08 * (1 - i / TAIL);
+          const alpha = i === 0 ? 0.22 : 0.13 * (1 - i / TAIL);
           ctx.fillStyle = `rgba(125, 255, 160, ${alpha.toFixed(3)})`;
           ctx.fillText(col.glyphs[i], col.x, gy);
         }
