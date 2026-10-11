@@ -2,7 +2,7 @@
 
 Portfolio développeur au **thème terminal**, **bilingue français/anglais**, propulsé par Next.js 16 et un agent IA embarqué (eve + GLM 5.3).
 
-- **Production** : <https://portfolio-three-lovat-gph5nh2l2s.vercel.app>
+- **Production** : <https://amidalasamari-sandy.vercel.app>
 - **Dépôt** : <https://github.com/codertobi77/portfolio>
 
 L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres terminales, effet CRT (scanlines + vignette), séquence de démarrage, machine à écrire et révélation en **streaming** du texte au scroll.
@@ -246,7 +246,7 @@ Particularités :
 
 1. **Build de l'agent eve** : `@vercel/connect` construit l'agent pendant le déploiement Vercel (`npm run build` en local ne le reconstruit pas). Le healthcheck de l'agent est exposé sur `/eve/v1/health`.
 2. **Variables d'environnement** : à définir dans le projet Vercel (Settings → Environment Variables) — voir tableau ci-dessus, sur les scopes production **et** preview.
-3. **Domaine production** : <https://portfolio-three-lovat-gph5nh2l2s.vercel.app>
+3. **Domaine production** : <https://amidalasamari-sandy.vercel.app>
 
 ```bash
 # Déploiement manuel depuis l'CLI (dépannage uniquement — le CI/CD git est la voie normale)
