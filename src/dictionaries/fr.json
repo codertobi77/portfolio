@@ -171,7 +171,14 @@
         "[ ok ] opening guestbook.log …",
         "studio v2.0 ready"
       ],
-      "session": "[sudo] session: active"
+      "session": "[sudo] session: active",
+      "tools": {
+        "ask": "[v2.1] eve studio tools: (y)es / (n)o",
+        "lastOn": "— enter = last [on]",
+        "lastOff": "— enter = last [off]",
+        "on": "[v2.1] eve studio tools: enabled",
+        "off": "[v2.1] eve studio tools: disabled"
+      }
     }
   },
   "ai": {

@@ -53,8 +53,21 @@ function lex(input: string): Chunk[] {
       continue;
     }
     if (ch === '"' || ch === "'") {
-      const close = input.indexOf(ch, i + 1);
-      const end = close === -1 ? input.length : close + 1;
+      // Scan for the closing quote, honouring `\x` escapes so `\"` does not
+      // end the span; an unclosed quote colors to the end of the line.
+      let j = i + 1;
+      while (j < input.length) {
+        if (input[j] === "\\") {
+          j += 2;
+          continue;
+        }
+        if (input[j] === ch) {
+          j += 1;
+          break;
+        }
+        j += 1;
+      }
+      const end = Math.min(j, input.length);
       chunks.push({ text: input.slice(i, end), kind: "str" });
       i = end;
       continue;

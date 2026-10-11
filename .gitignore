@@ -27,6 +27,9 @@
 # eve agent runtime state (cache, dev snapshots)
 .eve/
 
+# eve build output (nitro bundle — npx eve build)
+.output/
+
 # scratch shell tests (compiled harness + runner)
 /.scratch/
 

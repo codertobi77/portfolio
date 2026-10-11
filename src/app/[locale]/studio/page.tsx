@@ -32,6 +32,7 @@ export default async function StudioPage({
       <StudioBoot
         lines={dict.studio.boot.lines}
         sessionLine={sessionActive ? dict.studio.boot.session : undefined}
+        tools={dict.studio.boot.tools}
       />
       <header>
         <ScrollReveal>

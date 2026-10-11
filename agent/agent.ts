@@ -15,7 +15,9 @@ export default defineAgent({
   // Declared explicitly: the AI Gateway catalog has no metadata for this
   // custom provider, so `eve build` cannot resolve it on its own.
   modelContextWindowTokens: 1_048_576,
-  // The portfolio agent only needs authored tools (blog drafting), not
+  // The portfolio agent only needs authored tools — blog drafting
+  // (save_blog_draft) and, when the owner opts in at Studio boot, the v2.1
+  // studio__* toolset (agent/tools/studio.ts, dynamic per turn) — not
   // bash/read/write/web access. Keeps the public demo surface minimal.
   defaultTools: false,
 });

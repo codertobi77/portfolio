@@ -2,7 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { getBlogPost, getBlogPosts } from "../../blog";
 import { getSiteProfile, PROFILE_KEY, type SiteProfile } from "../../profile";
-import { ShellParseError, parseCommand, tokenize, type ParsedCommand } from "./parse";
+import {
+  ShellParseError,
+  commandAndSub,
+  parseCommand,
+  tokenize,
+  type ParsedCommand,
+} from "./parse";
 import { boolFlagsFor, findCommand, helpLines, requiresSudo, usageLine } from "./registry";
 import type { CommandDeps, ShellLine, StudioCommandResult } from "./types";
 
@@ -256,9 +262,9 @@ export async function execStudioCommand(
   let peekCommand = "";
   let peekSub: string | undefined;
   try {
-    const tokens = tokenize(input);
-    peekCommand = tokens[0] ?? "";
-    peekSub = tokens[1];
+    // Same sub rule as parseCommand (options never land in the sub slot) so
+    // boolFlagsFor resolves against the command path the parser will build.
+    ({ command: peekCommand, sub: peekSub } = commandAndSub(tokenize(input)));
   } catch (e) {
     return parseFailure(e);
   }
@@ -469,6 +475,7 @@ async function projectsCreate(
   if (res.error) return failure([err(`database error: ${res.error.message}`)]);
 
   deps.revalidate(`/${deps.locale}`);
+  deps.revalidate(`/${deps.locale}/projects`); // the projects page is SSG
   const lines: Lines = [
     ok(`created project ${slug}`),
     dim(`id ${res.data.id}`),
@@ -511,6 +518,7 @@ async function projectsEdit(
   if (res.error) return failure([err(`database error: ${res.error.message}`)]);
 
   deps.revalidate(`/${deps.locale}`);
+  deps.revalidate(`/${deps.locale}/projects`); // the projects page is SSG
   const newSlug = row.slug ?? resolved.slug;
   return success([ok(`updated project ${newSlug}`)]);
 }
@@ -535,6 +543,7 @@ async function projectsSetPublished(
   if (res.error) return failure([err(`database error: ${res.error.message}`)]);
 
   deps.revalidate(`/${deps.locale}`);
+  deps.revalidate(`/${deps.locale}/projects`); // the projects page is SSG
   return success([ok(`${target ? "published" : "hidden"} project ${resolved.slug}`)]);
 }
 
@@ -553,6 +562,7 @@ async function projectsDelete(
   if (res.error) return failure([err(`database error: ${res.error.message}`)]);
 
   deps.revalidate(`/${deps.locale}`);
+  deps.revalidate(`/${deps.locale}/projects`); // the projects page is SSG
   return success([ok(`deleted project ${resolved.slug}`)]);
 }
 

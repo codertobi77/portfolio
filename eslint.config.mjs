@@ -14,8 +14,10 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated docs site, committed as-is:
     "doc/**",
-    // Generated eve runtime state (compiled snapshots) and Vercel state:
+    // Generated eve runtime state (compiled snapshots), its nitro build
+    // output (npx eve build) and Vercel state:
     ".eve/**",
+    ".output/**",
     ".vercel/**",
     // Scratch shell tests: compiled CJS harness + runner (gitignored):
     ".scratch/**",

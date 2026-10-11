@@ -12,6 +12,7 @@ import { completeInput, isInteractive } from "@/lib/studio/shell/registry";
 import { highlightInput } from "@/lib/studio/shell/highlight";
 import { tokenize } from "@/lib/studio/shell/parse";
 import type { ShellLine } from "@/lib/studio/shell/types";
+import { studioToolsCookieOn } from "@/lib/studio/tools";
 import { cn } from "@/lib/utils";
 
 /**
@@ -215,9 +216,12 @@ function applyCompletion(input: string, replacement: string): string {
   return `${parts.join(" ")} `;
 }
 
-/** Double-quote a value for the shell (the tokenizer has no escapes). */
+/**
+ * Double-quote a value for the shell — `\\` and `\"` are resolved by the
+ * tokenizer inside quotes, so embedded double quotes survive verbatim.
+ */
 function shellQuote(value: string): string {
-  return `"${value.replace(/"/g, "”")}"`;
+  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
 // ---- wizards ----
@@ -405,13 +409,24 @@ export function StudioTerminal({
     (message: string) => {
       const startIdx = data.messages.length;
       appendEntry({ id: idRef.current++, kind: "eve", input: message, startIdx });
+      const lang = locale === "fr" ? "French" : "English";
+      // v2.1: the clientContext hints at the studio__* tools when the owner
+      // opted in at boot — informative only, the hard gate is the dynamic
+      // tool resolver in agent/tools/studio.ts (server-side, per turn).
+      const instruction = studioToolsCookieOn()
+        ? `You are the portfolio owner's assistant inside the Studio terminal. ` +
+          `Help draft/improve a blog post in ${lang}; when they ask to save, call save_blog_draft with locale="${locale}". ` +
+          `The studio__projects, studio__guestbook, studio__contact, studio__profile, studio__blog and ` +
+          `studio__stats tools manage the portfolio's content — use them for the owner's requests ` +
+          `(guestbook moderation, projects, profile, inbox, stats). Mutating actions will first ask ` +
+          `the owner to approve, and their output is English shell text you rephrase in ${lang}.`
+        : `Help the owner draft/improve a blog post in ${lang}. When they ask to save, ` +
+          `call save_blog_draft with locale="${locale}".`;
       void send(message, {
         clientContext: {
           surface: "studio-owner",
           locale,
-          instruction: `Help the owner draft/improve a blog post in ${
-            locale === "fr" ? "French" : "English"
-          }. When they ask to save, call save_blog_draft with locale="${locale}".`,
+          instruction,
         },
       });
     },
