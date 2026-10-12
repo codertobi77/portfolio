@@ -388,12 +388,19 @@ export function composeStatsArgv(): string {
 
 // ---- approval / authorization ----
 
-/** Actions that mutate data — each one requires explicit user approval. */
-export const MUTATING_ACTIONS: Record<string, ReadonlySet<string>> = {
-  projects: new Set(["create", "edit", "publish", "hide", "delete"]),
-  guestbook: new Set(["approve", "delete"]),
-  contact: new Set(["delete"]),
-  profile: new Set([
+/**
+ * Actions that mutate data — each one requires explicit user approval.
+ *
+ * Plain arrays, not Sets: the inline approval arrows in agent/tools/studio.ts
+ * capture this table as a durable closure value, and eve's callback transform
+ * only stores JSON-serializable captures — a Set fails resolution and the
+ * whole dynamic toolset gets dropped (the v2.1.1 regression).
+ */
+export const MUTATING_ACTIONS: Record<string, readonly string[]> = {
+  projects: ["create", "edit", "publish", "hide", "delete"],
+  guestbook: ["approve", "delete"],
+  contact: ["delete"],
+  profile: [
     "edit",
     "social_add",
     "social_delete",
@@ -403,9 +410,9 @@ export const MUTATING_ACTIONS: Record<string, ReadonlySet<string>> = {
     "timeline_add",
     "timeline_edit",
     "timeline_delete",
-  ]),
-  blog: new Set<string>(),
-  stats: new Set<string>(),
+  ],
+  blog: [],
+  stats: [],
 };
 
 export type StudioApprovalDecision =
@@ -424,8 +431,8 @@ export interface StudioApprovalContextLike {
   /**
    * unknown on purpose: eve types this as the tool's parsed input, and the
    * stats input ({ locale }) shares no property with an { action } shape —
-   * the weak-type check would reject the slice for that tool. studioApproval
-   * narrows it locally.
+   * the weak-type check would reject the slice for that tool.
+   * studioApprovalDecision narrows it locally.
    */
   readonly toolInput?: unknown;
 }
@@ -435,21 +442,29 @@ export interface StudioApprovalContextLike {
  * surface leaked to the public), mutations need the owner's approval (the
  * terminal renders approve/deny), reads are auto-approved — they are public
  * in the shell anyway.
+ *
+ * v2.1.1: a plain function, not a factory. eve's durable-callback transform
+ * only instruments callbacks authored inline at the tool property (arrows,
+ * function expressions, method shorthand, module-level references) — a
+ * value returned by a call expression has no descriptor, and a dynamic
+ * resolver whose tools lack one is rejected wholesale. agent/tools/studio.ts
+ * wires this helper through inline arrows.
  */
-export function studioApproval(mutating: ReadonlySet<string>) {
-  return (ctx: StudioApprovalContextLike): StudioApprovalDecision => {
-    const current = ctx.session.auth.current;
-    if (!current || current.principalId !== STUDIO_OWNER) {
-      return {
-        type: "denied",
-        reason: "Studio tools are reserved for the portfolio owner.",
-      };
-    }
-    const input = ctx.toolInput as { readonly action?: unknown } | undefined;
-    const action = typeof input?.action === "string" ? input.action : "";
-    if (mutating.has(action)) return "user-approval";
-    return { type: "approved" };
-  };
+export function studioApprovalDecision(
+  ctx: StudioApprovalContextLike,
+  mutating: readonly string[],
+): StudioApprovalDecision {
+  const current = ctx.session.auth.current;
+  if (!current || current.principalId !== STUDIO_OWNER) {
+    return {
+      type: "denied",
+      reason: "Studio tools are reserved for the portfolio owner.",
+    };
+  }
+  const input = ctx.toolInput as { readonly action?: unknown } | undefined;
+  const action = typeof input?.action === "string" ? input.action : "";
+  if (mutating.includes(action)) return "user-approval";
+  return { type: "approved" };
 }
 
 /**
@@ -557,19 +572,20 @@ function labelTarget(input: unknown): string {
 }
 
 /**
- * Shared label factory: `start` reads like a shell line ("studio projects
+ * Tool label helpers: `start` reads like a shell line ("studio projects
  * publish my-slug"), `complete` reports the tool outcome.
+ *
+ * v2.1.1: plain functions, not a factory — same durable-callback constraint
+ * as studioApprovalDecision (see its note). The label objects in
+ * agent/tools/studio.ts are authored inline with arrows that call these.
  */
-export function studioToolLabel(resource: string) {
-  return {
-    start: (input: unknown): string => {
-      const i = input as { action?: string };
-      const head = i.action ? `studio ${resource} ${i.action}` : `studio ${resource}`;
-      const target = labelTarget(input);
-      return target ? `${head} ${target}` : head;
-    },
-    complete: (_input: unknown, output: unknown): string => {
-      return (output as { ok?: boolean } | undefined)?.ok ? "done" : "failed";
-    },
-  };
+export function studioToolStartLabel(resource: string, input: unknown): string {
+  const i = input as { action?: string };
+  const head = i.action ? `studio ${resource} ${i.action}` : `studio ${resource}`;
+  const target = labelTarget(input);
+  return target ? `${head} ${target}` : head;
+}
+
+export function studioToolCompleteLabel(_input: unknown, output: unknown): string {
+  return (output as { ok?: boolean } | undefined)?.ok ? "done" : "failed";
 }

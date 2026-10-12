@@ -15,10 +15,12 @@ import {
   profileInputSchema,
   projectsInputSchema,
   statsInputSchema,
-  studioApproval,
-  studioToolLabel,
+  studioApprovalDecision,
+  studioToolCompleteLabel,
   studioToolsEnabled,
+  studioToolStartLabel,
 } from "@/lib/studio/agent-tools";
+import type { StudioApprovalContextLike } from "@/lib/studio/agent-tools";
 
 /**
  * v2.1 — the Studio toolset, registered dynamically per turn.
@@ -35,8 +37,14 @@ import {
  * dynamic-tool-lifecycle qualifyDynamicToolNames), so the keys below
  * namespace themselves: studio__projects, studio__guestbook, studio__contact,
  * studio__profile, studio__blog, studio__stats. All logic (argv composition,
- * the elevated exec, approvals, the revalidation bridge) lives in the
- * eve-free module src/lib/studio/agent-tools.ts so it stays scratch-testable.
+ * the elevated exec, approvals, the revalidation bridge) lives in the eve-free
+ * module src/lib/studio/agent-tools.ts so it stays scratch-testable.
+ *
+ * v2.1.1 — every callback (label, approval, execute) is authored INLINE here
+ * (arrows / method shorthand) calling those pure helpers. eve's durable-
+ * callback transform gives call-expression results no descriptor, and a
+ * resolver returning such a tool is rejected wholesale at runtime — the whole
+ * toolset silently vanishes from the model.
  */
 
 const toolOutputSchema = z.object({ ok: z.boolean(), output: z.string() });
@@ -53,8 +61,11 @@ function studioTools() {
         `Creating requires title and description; edit takes a ref plus the fields to change. ${OUTPUT_NOTE}`,
       inputSchema: projectsInputSchema,
       outputSchema: toolOutputSchema,
-      label: studioToolLabel("projects"),
-      approval: studioApproval(MUTATING_ACTIONS.projects),
+      label: {
+        start: (input: unknown) => studioToolStartLabel("projects", input),
+        complete: (input: unknown, output: unknown) => studioToolCompleteLabel(input, output),
+      },
+      approval: (ctx: StudioApprovalContextLike) => studioApprovalDecision(ctx, MUTATING_ACTIONS.projects),
       execute(input, ctx) {
         return executeStudioTool(ctx, input.locale, composeProjectsArgv(input));
       },
@@ -66,8 +77,11 @@ function studioTools() {
         `by id or id prefix), approve, delete (multiple ids at once). ${OUTPUT_NOTE}`,
       inputSchema: guestbookInputSchema,
       outputSchema: toolOutputSchema,
-      label: studioToolLabel("guestbook"),
-      approval: studioApproval(MUTATING_ACTIONS.guestbook),
+      label: {
+        start: (input: unknown) => studioToolStartLabel("guestbook", input),
+        complete: (input: unknown, output: unknown) => studioToolCompleteLabel(input, output),
+      },
+      approval: (ctx: StudioApprovalContextLike) => studioApprovalDecision(ctx, MUTATING_ACTIONS.guestbook),
       execute(input, ctx) {
         return executeStudioTool(ctx, input.locale, composeGuestbookArgv(input));
       },
@@ -79,8 +93,11 @@ function studioTools() {
         `id prefix), delete (messages, multiple ids at once). ${OUTPUT_NOTE}`,
       inputSchema: contactInputSchema,
       outputSchema: toolOutputSchema,
-      label: studioToolLabel("contact"),
-      approval: studioApproval(MUTATING_ACTIONS.contact),
+      label: {
+        start: (input: unknown) => studioToolStartLabel("contact", input),
+        complete: (input: unknown, output: unknown) => studioToolCompleteLabel(input, output),
+      },
+      approval: (ctx: StudioApprovalContextLike) => studioApprovalDecision(ctx, MUTATING_ACTIONS.contact),
       execute(input, ctx) {
         return executeStudioTool(ctx, input.locale, composeContactArgv(input));
       },
@@ -94,8 +111,11 @@ function studioTools() {
         `where relevant (role, status, timeline titles/organisations/descriptions). ${OUTPUT_NOTE}`,
       inputSchema: profileInputSchema,
       outputSchema: toolOutputSchema,
-      label: studioToolLabel("profile"),
-      approval: studioApproval(MUTATING_ACTIONS.profile),
+      label: {
+        start: (input: unknown) => studioToolStartLabel("profile", input),
+        complete: (input: unknown, output: unknown) => studioToolCompleteLabel(input, output),
+      },
+      approval: (ctx: StudioApprovalContextLike) => studioApprovalDecision(ctx, MUTATING_ACTIONS.profile),
       execute(input, ctx) {
         return executeStudioTool(ctx, input.locale, composeProfileArgv(input));
       },
@@ -107,8 +127,11 @@ function studioTools() {
         `frontmatter). Saving drafts stays save_blog_draft's job. ${OUTPUT_NOTE}`,
       inputSchema: blogInputSchema,
       outputSchema: toolOutputSchema,
-      label: studioToolLabel("blog"),
-      approval: studioApproval(MUTATING_ACTIONS.blog),
+      label: {
+        start: (input: unknown) => studioToolStartLabel("blog", input),
+        complete: (input: unknown, output: unknown) => studioToolCompleteLabel(input, output),
+      },
+      approval: (ctx: StudioApprovalContextLike) => studioApprovalDecision(ctx, MUTATING_ACTIONS.blog),
       execute(input, ctx) {
         return executeStudioTool(ctx, input.locale, composeBlogArgv(input));
       },
@@ -118,8 +141,11 @@ function studioTools() {
       description: `Portfolio counters: projects (total/published), guestbook (pending/approved), contact messages and blog posts per locale. ${OUTPUT_NOTE}`,
       inputSchema: statsInputSchema,
       outputSchema: toolOutputSchema,
-      label: studioToolLabel("stats"),
-      approval: studioApproval(MUTATING_ACTIONS.stats),
+      label: {
+        start: (input: unknown) => studioToolStartLabel("stats", input),
+        complete: (input: unknown, output: unknown) => studioToolCompleteLabel(input, output),
+      },
+      approval: (ctx: StudioApprovalContextLike) => studioApprovalDecision(ctx, MUTATING_ACTIONS.stats),
       execute(input, ctx) {
         return executeStudioTool(ctx, input.locale, composeStatsArgv());
       },
