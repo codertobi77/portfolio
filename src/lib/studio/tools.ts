@@ -19,6 +19,13 @@ export const STUDIO_TOOLS_ATTRIBUTE = "studio-tools";
 /** localStorage key holding the last boot choice ("on" | "off"). */
 export const STUDIO_TOOLS_CHOICE_KEY = "portfolio:studio:agent-tools";
 
+/**
+ * Window event fired by writeStudioToolsChoice — lets components that are
+ * already mounted (the Studio terminal, which sits under the boot overlay)
+ * follow a boot answer live instead of waiting for the next page load.
+ */
+export const STUDIO_TOOLS_EVENT = "studio-agent-tools";
+
 export type StudioToolsChoice = "on" | "off";
 
 /** Last boot choice from localStorage — null when never chosen (defaults to off). */
@@ -43,6 +50,11 @@ export function writeStudioToolsChoice(choice: StudioToolsChoice): void {
     document.cookie = `${STUDIO_TOOLS_COOKIE}=${choice}; path=/; max-age=31536000; samesite=lax`;
   } catch {
     // cookie writes blocked — tools stay in their previous state
+  }
+  try {
+    window.dispatchEvent(new Event(STUDIO_TOOLS_EVENT));
+  } catch {
+    // dispatch blocked — the next page load still re-reads the cookie
   }
 }
 

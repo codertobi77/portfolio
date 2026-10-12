@@ -42,7 +42,7 @@ L'ensemble du site imite un interpréteur de commandes : invite `❯`, fenêtres
 
 - **REPL `sudo eve`** : l'agent vit dans son propre shell (`eve@studio:~ ❯`), entré via `sudo eve` (ou `eve` si la session sudo est active) — sortie par `exit`/`quit`/Ctrl+D (`logout — back to dee@studio`). Réponse en streaming, approbation `save_blog_draft` via boutons inline ou `approve`/`deny`.
 - **Outil `save_blog_draft`** : réservé au propriétaire — enregistre un brouillon d'article MDX dans `content/blog/{locale}/`. Le cookie de session sudo est vérifié **à chaque appel** : après expiration (15 min), l'outil est refusé → retaper `sudo <cmd>` pour rouvrir une session puis relancer `eve`.
-- **Repli statique** : sans `NVIDIA_API_KEY` (situation actuelle en prod), le REPL eve répond via le repli statique — aucune clé n'est requise pour naviguer.
+- **Repli statique** : sans `NVIDIA_API_KEY`, l'agent échoue proprement — la génération des sections retombe sur le contenu statique, le REPL eve affiche l'erreur ; aucune clé n'est requise pour naviguer.
 - **Modèle** : GLM 5.3 servi par **NVIDIA NIM** (endpoint OpenAI-compatible) via `@ai-sdk/openai-compatible`.
 - **Surface d'outils minimale** : `defaultTools: false` — l'agent n'a ni bash, ni accès fichier libre, ni web ; uniquement les outils déclarés dans `agent/tools/` (statiques) et, pour l'owner ayant activé v2.1, les outils dynamiques `studio__*` (voir ci-dessous).
 - **Authentification** : le cookie de session Studio authentifie le principal `studio-owner` auprès du canal eve (`src/lib/studio.ts`).
@@ -77,7 +77,7 @@ Le persona est stocké dans Supabase (`site_profile`, blob jsonb) et **remplace 
 
 ### v2.1 — Outils agent (opt-in au boot)
 
-L'agent eve reçoit un jeu d'outils couvrant **toutes les commandes de données du shell** — `exec.ts` reste la source unique de vérité. L'activation se choisit **au boot du Studio** : chaque démarrage se termine par la question `[v2.1] eve studio tools: (y)es / (n)o — enter = last [<dernier choix>]`, posée à tous les visiteurs — le cookie public `studio_agent_tools` n'accorde rien par lui-même, c'est le couple owner + cookie (re-vérifié côté serveur à chaque tour) qui arme réellement les outils. Avec `y`, la dernière ligne du journal passe à `studio v2.1 ready`. `y`/`n` posent le cookie (mirroir localStorage pour le prochain boot) ; clic/Échap garde le choix précédent ; `prefers-reduced-motion` passe l'overlay (choix précédent conservé).
+L'agent eve reçoit un jeu d'outils couvrant **toutes les commandes de données du shell** — `exec.ts` reste la source unique de vérité. L'activation se choisit **au boot du Studio** : chaque démarrage se termine par la question `[v2.1] eve studio tools: (y)es / (n)o — enter = last [<dernier choix>]`, posée à tous les visiteurs — le cookie public `studio_agent_tools` n'accorde rien par lui-même, c'est le couple owner + cookie (re-vérifié côté serveur à chaque tour) qui arme réellement les outils. Avec `y`, la dernière ligne du journal passe à `studio v2.1 ready`, et la bannière du terminal bascule en direct sur `portfolio shell v2.1` + la ligne cyan `eve studio tools armed` (le terminal écoute l'événement `studio-agent-tools` — pas besoin de recharger). `y`/`n` posent le cookie (mirroir localStorage pour le prochain boot) ; clic/Échap garde le choix précédent ; `prefers-reduced-motion` passe l'overlay (choix précédent conservé).
 
 | Outil | Commandes shell couvertes | Approbation |
 |---|---|---|
@@ -94,6 +94,7 @@ Fonctionnement :
 - **Approbation** : lectures auto-approuvées (publiques dans le shell) ; chaque mutation passe par les boutons approve/deny du terminal (ou `approve`/`deny`). Le principal est re-vérifié dans `execute` — défense en profondeur, même pattern que `save_blog_draft`.
 - **Exécution** : chaque outil compose un argv (guillemets doubles avec échappement `"`/`\`, tokenizer de `parse.ts` ; un token quoté n'est jamais une option) et délègue à `execStudioCommand` avec deps elevated (client service-role) — validation, gardes et chemins de revalidation v2 réutilisés à l'identique. La sortie est le texte shell anglais ; l'agent la reformule dans la langue de la conversation.
 - **Pont de revalidation** : le service eve est distinct de Next → les chemins collectés pendant la commande partent dans un seul `POST /api/revalidate` (Bearer `STUDIO_REVALIDATE_SECRET`, comparaison en temps constant, liste blanche `^/(fr|en)(/(about|cv|contact|guestbook|projects))?$`, ≤ 16 chemins). Un échec du pont n'échoue jamais la commande (simple ligne `warn`).
+- **Requis en production** : `STUDIO_PASSCODE` (et `STUDIO_REVALIDATE_SECRET` pour le pont) doivent être définis dans le projet Vercel (Settings → Environment Variables, scopes production **et** preview). Sans passcode, le gate owner ne s'ouvre jamais : sudo est refusé, les sessions eve restent anonymes et les outils `studio__*` ne s'enregistrent pour personne — même après avoir répondu `y` au boot.
 
 Limites assumées : expiration sudo 15 min → les outils disparaissent comme `save_blog_draft` (revenir par `sudo` puis recharger la page) ; lecture blog via le fs du service eve (ok en dev ; en prod selon les fichiers embarqués — dégradation silencieuse « no posts ») ; le choix ne se change pas en cours de REPL (recharger la page) ; `prefers-reduced-motion` garde le dernier choix.
 
@@ -198,7 +199,7 @@ bun run dev         # ou : npm run dev → http://localhost:3000
 | `NEXT_PUBLIC_SUPABASE_URL` | client | pour Supabase | URL du projet Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client | pour Supabase | Clé publique (protégée par RLS) |
 | `SUPABASE_SERVICE_ROLE_KEY` | serveur | pour le shell Studio | Contourne RLS — **jamais** côté client, uniquement via `src/lib/supabase/admin.ts` |
-| `STUDIO_PASSCODE` | serveur | pour le Studio | Passcode du propriétaire (terminal Studio + outil `save_blog_draft`) |
+| `STUDIO_PASSCODE` | serveur | pour le Studio | Passcode du propriétaire (sudo du terminal Studio, `save_blog_draft` et gate des outils v2.1) — à définir aussi dans le projet Vercel |
 | `NVIDIA_API_KEY` | serveur | pour l'agent | Clé NVIDIA NIM (endpoint OpenAI-compatible, GLM 5.3) |
 | `STUDIO_REVALIDATE_SECRET` | serveur (site + agent) | pour v2.1 | Secret partagé du pont de revalidation (`POST /api/revalidate`) — sans lui, les mutations de l'agent aboutissent mais la revalidation est différée |
 | `STUDIO_SITE_URL` | serveur (agent) | optionnel | URL du site vue par le service eve (défaut : `https://$VERCEL_URL`, puis `http://localhost:3000`) |

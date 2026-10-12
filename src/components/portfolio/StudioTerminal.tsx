@@ -12,7 +12,7 @@ import { completeInput, isInteractive } from "@/lib/studio/shell/registry";
 import { highlightInput } from "@/lib/studio/shell/highlight";
 import { tokenize } from "@/lib/studio/shell/parse";
 import type { ShellLine } from "@/lib/studio/shell/types";
-import { studioToolsCookieOn } from "@/lib/studio/tools";
+import { STUDIO_TOOLS_EVENT, studioToolsCookieOn } from "@/lib/studio/tools";
 import { cn } from "@/lib/utils";
 
 /**
@@ -86,10 +86,21 @@ type PasswordPending =
 const HISTORY_KEY = "portfolio:shell:history";
 const SUDO_MAX_ATTEMPTS = 3;
 
+// The banner always renders v2.0 on the server (no hydration mismatch);
+// after mount the client swaps to V21_BOOT_LINES when the v2.1 tools choice
+// cookie is on — see the toolsArmed effect below.
 const BOOT_LINES: ShellLine[] = [
   { text: "dee@studio — portfolio shell v2.0", kind: "ok" },
   { text: "reads are public · mutations need sudo · 'sudo -l' lists your rights", kind: "dim" },
   { text: "type 'help' for commands · Tab completes · ↑ recalls history · Ctrl+L clears", kind: "dim" },
+];
+
+/** v2.1 banner — the boot lines shown once the eve studio tools are armed. */
+const V21_BOOT_LINES: ShellLine[] = [
+  { text: "dee@studio — portfolio shell v2.1", kind: "ok" },
+  { text: "reads are public · mutations need sudo · 'sudo -l' lists your rights", kind: "dim" },
+  { text: "type 'help' for commands · Tab completes · ↑ recalls history · Ctrl+L clears", kind: "dim" },
+  { text: "eve studio tools armed — 'sudo eve' to chat with the agent", kind: "head" },
 ];
 
 // ---- eve message helpers ----
@@ -346,6 +357,24 @@ export function StudioTerminal({
   const idRef = useRef(1);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // v2.1 banner: the boot lines follow the tools choice (cookie). Read after
+  // mount — the server rendered the v2.0 banner — then kept live: answering
+  // the StudioBoot prompt dispatches STUDIO_TOOLS_EVENT and flips the banner
+  // while the terminal sits under the fading boot overlay.
+  const [toolsArmed, setToolsArmed] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- post-mount cookie read; live updates arrive via the event below
+    setToolsArmed(studioToolsCookieOn());
+    const onChoice = () => setToolsArmed(studioToolsCookieOn());
+    window.addEventListener(STUDIO_TOOLS_EVENT, onChoice);
+    return () => window.removeEventListener(STUDIO_TOOLS_EVENT, onChoice);
+  }, []);
+  const bootLines = toolsArmed ? V21_BOOT_LINES : BOOT_LINES;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-render the (single) boot entry whenever the banner variant changes
+    setEntries((prev) => prev.map((e) => (e.kind === "boot" ? { ...e, lines: bootLines } : e)));
+  }, [bootLines]);
+
   const agentStreaming = status === "submitted" || status === "streaming";
   const resuming = status === "resuming";
 
@@ -393,8 +422,8 @@ export function StudioTerminal({
   }, [appendEntry]);
 
   const clearEntries = useCallback(() => {
-    setEntries([{ id: idRef.current++, kind: "boot", lines: BOOT_LINES }]);
-  }, []);
+    setEntries([{ id: idRef.current++, kind: "boot", lines: bootLines }]);
+  }, [bootLines]);
 
   /** Attach a server result to an entry (echo stays, spinner goes). */
   const settleEntry = useCallback((id: number, lines: ShellLine[]) => {
